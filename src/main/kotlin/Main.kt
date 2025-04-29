@@ -1,13 +1,18 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
@@ -18,6 +23,8 @@ import kotlinx.serialization.json.Json
 import okhttp3.*
 import okio.ByteString
 import java.util.concurrent.TimeUnit
+import kotlin.math.cos
+import kotlin.math.sin
 
 fun main() = application {
     Window(onCloseRequest = ::exitApplication, title = "Cliente WebSocket OkHttp") {
@@ -52,7 +59,7 @@ fun App() {
         Row {
             Button(onClick = {
                 val request = Request.Builder()
-                    .url("ws://localhost:8080/game/1") // Cambia tu URL aquí
+                    .url("ws://localhost:8080/game/2") // Cambia tu URL aquí
                     .build()
 
                 webSocket = client.newWebSocket(request, object : WebSocketListener() {
@@ -64,9 +71,9 @@ fun App() {
 
                         val messagePayload = Json.decodeFromString<Message>(text)
 
-                        if (messagePayload.messageType == MessageType.TEXT_MESSAGE) {
-                            messages = messages + text
-                        }
+
+                        messages = messages +( messagePayload.content + " ---> " + messagePayload.messageType )
+
                     }
 
                     override fun onClosed(ws: WebSocket, code: Int, reason: String) {
@@ -101,21 +108,6 @@ fun App() {
             label = { Text("Mensaje") }
         )
 
-        var inputName by remember { mutableStateOf("") }
-        var inputDinero by remember { mutableStateOf("") }
-
-        OutlinedTextField(
-            value = inputName,
-            onValueChange = { inputName = it },
-            label = { Text("Name") }
-        )
-
-        OutlinedTextField(
-            value = inputDinero,
-            onValueChange = { inputDinero = it },
-            label = { Text("Dinero") }
-        )
-
 
         Button(onClick = {
             val message = Message(MessageType.TEXT_MESSAGE, inputMessage)
@@ -124,16 +116,6 @@ fun App() {
             inputMessage = ""
         }, enabled = isConnected) {
             Text("Enviar mensaje")
-        }
-
-        Button(onClick = {
-            val info = Json.encodeToString<PlayerInfoMessage>(PlayerInfoMessage(name = inputName, dinero = inputDinero.toInt()))
-            val message = Message(MessageType.PLAYER_INFO, info)
-            val jsonInfo = Json.encodeToString<Message>(message)
-            webSocket?.send(jsonInfo)
-            inputMessage = ""
-        }, enabled = isConnected) {
-            Text("Enviar tus datos")
         }
 
 
@@ -170,6 +152,40 @@ fun SimpleChat(messages: List<String>, modifier: Modifier = Modifier) {
                     .fillMaxWidth()
                     .padding(8.dp)
             )
+        }
+    }
+}
+
+
+
+@Composable
+fun PokerTable(players: List<String>, modifier: Modifier = Modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .aspectRatio(1f) // Para que sea un cuadrado (y parezca un círculo)
+            .background(Color(0xFF2E7D32), CircleShape)
+    ) {
+        players.forEachIndexed { index, player ->
+            val angle = (360f / players.size) * index - 90f // Empezar arriba
+            val density = LocalDensity.current
+            val radius = with(density) { 150.dp.toPx() }
+
+            Box(
+                modifier = Modifier
+                    .offset {
+                        // Convertimos ángulo a coordenadas
+                        val rad = Math.toRadians(angle.toDouble())
+                        val x = (cos(rad) * radius).toInt()
+                        val y = (sin(rad) * radius).toInt()
+                        IntOffset(x, y)
+                    }
+                    .size(60.dp)
+                    .background(Color.White, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(player, color = Color.Black)
+            }
         }
     }
 }
