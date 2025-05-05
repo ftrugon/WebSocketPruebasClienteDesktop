@@ -16,12 +16,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.*
-import okio.ByteString
 import java.util.concurrent.TimeUnit
 import kotlin.math.cos
 import kotlin.math.sin
@@ -118,6 +115,18 @@ fun App() {
             Text("Enviar mensaje")
         }
 
+        Button(onClick = {
+            val playerinfo = PlayerInfoMessage(inputMessage,100)
+            val plterinfjson = Json.encodeToString(playerinfo)
+            val message = Message(MessageType.PLAYER_INFO, plterinfjson)
+            val jsonMessage = Json.encodeToString<Message>(message)
+            webSocket?.send(jsonMessage)
+            inputMessage = ""
+        }, enabled = isConnected) {
+            Text("Enviar nombre")
+        }
+
+
 
         Button(onClick = {
             val message = Message(MessageType.PLAYER_READY, "true")
@@ -126,6 +135,17 @@ fun App() {
             inputMessage = ""
         }, enabled = isConnected) {
             Text("Listo para jugar")
+        }
+
+        Button(onClick = {
+            val betTal = BetPayload(BetAction.CALL,0)
+            val jsonBet = Json.encodeToString(betTal)
+            val message = Message(MessageType.ACTION, jsonBet)
+            val jsonInfo = Json.encodeToString<Message>(message)
+            webSocket?.send(jsonInfo)
+            inputMessage = ""
+        }, enabled = isConnected) {
+            Text("Enviar informacion")
         }
 
 
