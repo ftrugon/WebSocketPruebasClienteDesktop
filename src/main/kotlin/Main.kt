@@ -43,7 +43,7 @@ fun main() = application {
 @Composable
 fun App() {
     val listState = rememberLazyListState()
-    val messages = remember { mutableStateListOf<String>() }
+    val messages = remember { mutableStateListOf<Message>() }
     var inputMessage by remember { mutableStateOf("") }
     var isConnected by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -68,7 +68,7 @@ fun App() {
             override fun onMessage(ws: WebSocket, text: String) {
                 val payload = Json.decodeFromString<Message>(text)
                 scope.launch {
-                    messages.add(payload.content)
+                    messages.add(payload)
 
                 }
             }
@@ -182,7 +182,7 @@ fun App() {
 @Composable
 fun SimpleChat(
     listState: LazyListState,
-    messages: List<String>,
+    messages: List<Message>,
     webSocket: WebSocket?,
     isConnected: Boolean,
     modifier: Modifier = Modifier
@@ -197,9 +197,21 @@ fun SimpleChat(
             modifier = modifier.weight(1f),
             // reverseLayout = true
         ) {
-            items(messages) { message ->
+            items(messages) {
+                when (it.messageType) {
+                    MessageType.TEXT_MESSAGE -> {
+                        ListItem(it)
+                    }
+                    MessageType.PLAYER_READY -> {
+                        Text("${it.content} is ready to play.")
+                    }
+                    MessageType.PLAYER_JOIN -> {
+                        Text("${it.content} has joined the table.")
+                    }
+                    else -> {
 
-                ListItem(message)
+                    }
+                }
 
             }
         }
@@ -230,7 +242,7 @@ fun SimpleChat(
 }
 
 @Composable
-fun ListItem(msg:String){
+fun ListItem(msg:Message) {
     Box(
         modifier = Modifier
             .padding(vertical = 6.dp, horizontal = 12.dp)
@@ -246,7 +258,7 @@ fun ListItem(msg:String){
                 .fillMaxWidth()
         ) {
             Text(
-                text = msg,
+                text = msg.content,
                 color = Color.Black,
                 fontSize = 14.sp
             )
