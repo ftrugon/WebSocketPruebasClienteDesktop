@@ -1,211 +1,271 @@
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import androidx.compose.ui.window.rememberWindowState
+import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.*
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
-import kotlin.math.cos
-import kotlin.math.sin
 
 fun main() = application {
-    Window(onCloseRequest = ::exitApplication, title = "Cliente WebSocket OkHttp") {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "Cliente WebSocket OkHttp",
+        //resizable = false,
+        // icon = ,
+        state = rememberWindowState(width = 1000.dp, height = 700.dp)
+    ) {
         App()
     }
 }
 
-
-@Preview
 @Composable
 fun App() {
-    var messages by remember { mutableStateOf(listOf<String>()) }
+    val listState = rememberLazyListState()
+    val messages = remember { mutableStateListOf<String>() }
     var inputMessage by remember { mutableStateOf("") }
     var isConnected by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    // OkHttpClient + WebSocket state
     val client = remember {
         OkHttpClient.Builder()
-            .pingInterval(10, TimeUnit.SECONDS) // Opcional: para mantener viva la conexión
+            .pingInterval(10, TimeUnit.SECONDS)
             .build()
     }
-
     var webSocket by remember { mutableStateOf<WebSocket?>(null) }
 
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+    // Función para abrir WS
+    fun setupWebSocket() {
+        val request = Request.Builder()
+            .url("ws://localhost:8080/game/2")
+            .build()
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(ws: WebSocket, response: Response) {
+                scope.launch { isConnected = true }
+            }
+            override fun onMessage(ws: WebSocket, text: String) {
+                val payload = Json.decodeFromString<Message>(text)
+                scope.launch {
+                    messages.add(payload.content)
+
+                }
+            }
+            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
+                scope.launch { isConnected = false }
+            }
+            override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
+                scope.launch { isConnected = false }
+                t.printStackTrace()
+            }
+        })
+    }
+
+    Row(modifier = Modifier.fillMaxSize()
+        //.padding(16.dp)
     ) {
-        Text(if (isConnected) "Conectado" else "Desconectado")
-        Spacer(Modifier.height(8.dp))
 
-        Row {
-            Button(onClick = {
-                val request = Request.Builder()
-                    .url("ws://localhost:8080/game/2") // Cambia tu URL aquí
-                    .build()
+        Column(
+            modifier = Modifier.weight(3f).fillMaxHeight().background(Color.LightGray),
+            horizontalAlignment = Alignment.CenterHorizontally
+        )
+        {
+            Text(if (isConnected) "Conectado" else "Desconectado")
+            Spacer(Modifier.height(8.dp))
 
-                webSocket = client.newWebSocket(request, object : WebSocketListener() {
-                    override fun onOpen(ws: WebSocket, response: Response) {
-                        isConnected = true
-                    }
-
-                    override fun onMessage(ws: WebSocket, text: String) {
-
-                        val messagePayload = Json.decodeFromString<Message>(text)
-
-
-                        messages = messages +( messagePayload.content + " ---> " + messagePayload.messageType )
-
-                    }
-
-                    override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                        isConnected = false
-                    }
-
-                    override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                        isConnected = false
-                        t.printStackTrace()
-                    }
-                })
-
-            }) {
-                Text("Conectar")
+            // Row Conectar / Desconectar
+            Row {
+                Button(onClick = { setupWebSocket() }) {
+                    Text("Conectar")
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(onClick = {
+                    webSocket?.close(1000, "Usuario cerró la conexión")
+                }) {
+                    Text("Desconectar")
+                }
             }
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.height(16.dp))
+
+            // Campo de texto genérico
+            OutlinedTextField(
+                value = inputMessage,
+                onValueChange = { inputMessage = it },
+                label = { Text("Mensaje") },
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // Botones de acción
+            Button(onClick = {
+                val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
+                webSocket?.send(Json.encodeToString(msg))
+                inputMessage = ""
+            }, enabled = isConnected) {
+                Text("Enviar mensaje")
+            }
 
             Button(onClick = {
-                webSocket?.close(1000, "Usuario cerró la conexión")
-                isConnected = false
-            }) {
-                Text("Desconectar")
+                val player = PlayerInfoMessage(inputMessage, 100)
+                val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(player))
+                webSocket?.send(Json.encodeToString(msg))
+                inputMessage = ""
+            }, enabled = isConnected) {
+                Text("Enviar nombre")
+            }
+
+            Button(onClick = {
+                val msg = Message(MessageType.PLAYER_READY, "true")
+                webSocket?.send(Json.encodeToString(msg))
+            }, enabled = isConnected) {
+                Text("Listo para jugar")
+            }
+
+            Button(onClick = {
+                val payload = BetPayload(BetAction.RAISE, 10)
+                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                webSocket?.send(Json.encodeToString(msg))
+            }, enabled = isConnected) {
+                Text("Raise 10")
+            }
+
+            Button(onClick = {
+                val payload = BetPayload(BetAction.CALL, 0)
+                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                webSocket?.send(Json.encodeToString(msg))
+            }, enabled = isConnected) {
+                Text("Call / Check")
+            }
+
+            Button(onClick = {
+                val payload = BetPayload(BetAction.FOLD, 0)
+                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                webSocket?.send(Json.encodeToString(msg))
+            }, enabled = isConnected) {
+                Text("Fold")
+            }
+
+        }
+
+
+        Row(Modifier.weight(1f).fillMaxHeight().background(Color.Green)) {
+            SimpleChat(listState,messages,webSocket,isConnected,)
+        }
+
+    }
+}
+
+
+@Composable
+fun SimpleChat(
+    listState: LazyListState,
+    messages: List<String>,
+    webSocket: WebSocket?,
+    isConnected: Boolean,
+    modifier: Modifier = Modifier
+) {
+
+    var inputMessage by remember { mutableStateOf("") }
+
+
+    Column {
+        LazyColumn(
+            state = listState,
+            modifier = modifier.weight(1f),
+            // reverseLayout = true
+        ) {
+            items(messages) { message ->
+
+                ListItem(message)
+
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        LaunchedEffect(messages.size) {
+            val index = if (messages.isEmpty()) 0 else messages.size - 1
+            listState.scrollToItem(index)
+        }
 
         OutlinedTextField(
             value = inputMessage,
             onValueChange = { inputMessage = it },
-            label = { Text("Mensaje") }
+            label = { Text("Mensaje") },
+            singleLine = true,
+            trailingIcon = {
+                IconButton(onClick = {
+                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
+                    webSocket?.send(Json.encodeToString(msg))
+                    inputMessage = ""
+                },enabled = isConnected) {
+                    Icon(Icons.Default.Send, contentDescription = "")
+                }
+            }
         )
 
 
-        Button(onClick = {
-            val message = Message(MessageType.TEXT_MESSAGE, inputMessage)
-            val jsonMessage = Json.encodeToString<Message>(message)
-            webSocket?.send(jsonMessage)
-            inputMessage = ""
-        }, enabled = isConnected) {
-            Text("Enviar mensaje")
-        }
-
-        Button(onClick = {
-            val playerinfo = PlayerInfoMessage(inputMessage,100)
-            val plterinfjson = Json.encodeToString(playerinfo)
-            val message = Message(MessageType.PLAYER_INFO, plterinfjson)
-            val jsonMessage = Json.encodeToString<Message>(message)
-            webSocket?.send(jsonMessage)
-            inputMessage = ""
-        }, enabled = isConnected) {
-            Text("Enviar nombre")
-        }
-
-
-
-        Button(onClick = {
-            val message = Message(MessageType.PLAYER_READY, "true")
-            val jsonInfo = Json.encodeToString<Message>(message)
-            webSocket?.send(jsonInfo)
-            inputMessage = ""
-        }, enabled = isConnected) {
-            Text("Listo para jugar")
-        }
-
-        Button(onClick = {
-            val betTal = BetPayload(BetAction.CALL,0)
-            val jsonBet = Json.encodeToString(betTal)
-            val message = Message(MessageType.ACTION, jsonBet)
-            val jsonInfo = Json.encodeToString<Message>(message)
-            webSocket?.send(jsonInfo)
-            inputMessage = ""
-        }, enabled = isConnected) {
-            Text("Enviar informacion")
-        }
-
-
-        Spacer(Modifier.height(16.dp))
-
-        Text("Mensajes recibidos:")
-
-        SimpleChat(messages)
-
     }
 }
 
-
 @Composable
-fun SimpleChat(messages: List<String>, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier = modifier,
-        reverseLayout = true
-    ) {
-        items(messages) { message ->
-            Text(
-                text = message,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
-        }
-    }
-}
-
-
-
-@Composable
-fun PokerTable(players: List<String>, modifier: Modifier = Modifier) {
+fun ListItem(msg:String){
     Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .aspectRatio(1f) // Para que sea un cuadrado (y parezca un círculo)
-            .background(Color(0xFF2E7D32), CircleShape)
+        modifier = Modifier
+            .padding(vertical = 6.dp, horizontal = 12.dp)
+            .fillMaxWidth()
     ) {
-        players.forEachIndexed { index, player ->
-            val angle = (360f / players.size) * index - 90f // Empezar arriba
-            val density = LocalDensity.current
-            val radius = with(density) { 150.dp.toPx() }
+        Column(
+            modifier = Modifier
+                .background(
+                    color = Color(0xFFDDEEFF),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(8.dp)  // padding interior uniforme
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = msg,
+                color = Color.Black,
+                fontSize = 14.sp
+            )
 
-            Box(
+            Spacer(modifier = Modifier.height(4.dp))
+
+            val calendar = Calendar.getInstance()
+            val hour = calendar.get(Calendar.HOUR_OF_DAY)
+            val minute = calendar.get(Calendar.MINUTE)
+            val timestamp = String.format("%02d:%02d", hour, minute)
+
+            Text(
+                text = timestamp,
+                fontSize = 12.sp,
+                color = Color.DarkGray,
                 modifier = Modifier
-                    .offset {
-                        // Convertimos ángulo a coordenadas
-                        val rad = Math.toRadians(angle.toDouble())
-                        val x = (cos(rad) * radius).toInt()
-                        val y = (sin(rad) * radius).toInt()
-                        IntOffset(x, y)
-                    }
-                    .size(60.dp)
-                    .background(Color.White, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(player, color = Color.Black)
-            }
+                    .align(Alignment.End)
+                    .padding(top = 4.dp)
+            )
         }
     }
 }
