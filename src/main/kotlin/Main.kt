@@ -1,20 +1,18 @@
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +45,8 @@ fun App() {
     var inputMessage by remember { mutableStateOf("") }
     var isConnected by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
+    var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
+    var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
     // OkHttpClient + WebSocket state
     val client = remember {
         OkHttpClient.Builder()
@@ -68,6 +67,18 @@ fun App() {
             override fun onMessage(ws: WebSocket, text: String) {
                 val payload = Json.decodeFromString<Message>(text)
                 scope.launch {
+
+                    if (payload.messageType == MessageType.STATE_UPDATE){
+                        commCards = Json.decodeFromString<MutableList<Card>>(payload.content)
+                    }
+                    if (payload.messageType == MessageType.PLAYER_CARDS){
+                        userCards = Json.decodeFromString<MutableList<Card>>(payload.content)
+                    }
+                    if (payload.messageType == MessageType.END_ROUND){
+                        commCards = mutableListOf<Card>()
+                        userCards = mutableListOf<Card>()
+                    }
+
                     messages.add(payload)
 
                 }
@@ -87,7 +98,7 @@ fun App() {
     ) {
 
         Column(
-            modifier = Modifier.weight(3f).fillMaxHeight().background(Color.LightGray),
+            modifier = Modifier.weight(3f).fillMaxHeight(),
             horizontalAlignment = Alignment.CenterHorizontally
         )
         {
@@ -120,53 +131,88 @@ fun App() {
             Spacer(Modifier.height(8.dp))
 
             // Botones de acción
-            Button(onClick = {
-                val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
-                webSocket?.send(Json.encodeToString(msg))
-                inputMessage = ""
-            }, enabled = isConnected) {
-                Text("Enviar mensaje")
+            Row {
+                Button(onClick = {
+                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
+                    webSocket?.send(Json.encodeToString(msg))
+                    inputMessage = ""
+                }, enabled = isConnected) {
+                    Text("Enviar mensaje")
+                }
+
+                Button(onClick = {
+                    val player = PlayerInfoMessage(inputMessage, 100)
+                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(player))
+                    webSocket?.send(Json.encodeToString(msg))
+                    inputMessage = ""
+                }, enabled = isConnected) {
+                    Text("Enviar nombre")
+                }
+
+                Button(onClick = {
+                    val msg = Message(MessageType.PLAYER_READY, "true")
+                    webSocket?.send(Json.encodeToString(msg))
+                }, enabled = isConnected) {
+                    Text("Listo para jugar")
+                }
             }
 
-            Button(onClick = {
-                val player = PlayerInfoMessage(inputMessage, 100)
-                val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(player))
-                webSocket?.send(Json.encodeToString(msg))
-                inputMessage = ""
-            }, enabled = isConnected) {
-                Text("Enviar nombre")
+
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp), // Altura para mostrar cartas
+                horizontalArrangement = Arrangement.Center
+            ) {
+                // Aquí puedes mostrar tus cartas
+                DrawCards(commCards)
             }
 
-            Button(onClick = {
-                val msg = Message(MessageType.PLAYER_READY, "true")
-                webSocket?.send(Json.encodeToString(msg))
-            }, enabled = isConnected) {
-                Text("Listo para jugar")
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+
+                Button(
+                    onClick = {
+                        val payload = BetPayload(BetAction.RAISE, 10)
+                        val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                        webSocket?.send(Json.encodeToString(msg)) }
+                    ,
+                    enabled = isConnected,
+                    modifier = Modifier.padding(horizontal = 10.dp)) {
+                    Text("Raise 10")
+                }
+
+                Button(onClick = {
+                    val payload = BetPayload(BetAction.CALL, 0)
+                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                    webSocket?.send(Json.encodeToString(msg))
+                }, enabled = isConnected,
+                    modifier = Modifier.padding(horizontal = 10.dp)) {
+                    Text("Call / Check")
+                }
+
+                Button(onClick = {
+                    val payload = BetPayload(BetAction.FOLD, 0)
+                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                    webSocket?.send(Json.encodeToString(msg))
+                }, enabled = isConnected,
+                    modifier = Modifier.padding(horizontal = 10.dp)) {
+                    Text("Fold")
+                }
             }
 
-            Button(onClick = {
-                val payload = BetPayload(BetAction.RAISE, 10)
-                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                webSocket?.send(Json.encodeToString(msg))
-            }, enabled = isConnected) {
-                Text("Raise 10")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp), // Altura para mostrar cartas
+                horizontalArrangement = Arrangement.Center
+            ) {
+                DrawCards(userCards)
             }
 
-            Button(onClick = {
-                val payload = BetPayload(BetAction.CALL, 0)
-                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                webSocket?.send(Json.encodeToString(msg))
-            }, enabled = isConnected) {
-                Text("Call / Check")
-            }
-
-            Button(onClick = {
-                val payload = BetPayload(BetAction.FOLD, 0)
-                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                webSocket?.send(Json.encodeToString(msg))
-            }, enabled = isConnected) {
-                Text("Fold")
-            }
 
         }
 
@@ -176,6 +222,59 @@ fun App() {
         }
 
     }
+}
+
+@Composable
+fun DrawCards(cardList: List<Card>){
+    for (card in cardList){
+        DrawCard(card)
+    }
+}
+
+@Composable
+fun DrawCard(card: Card) {
+
+
+    val simbolToWrite:String
+    val colorOfCard:Color = when (card.suit) {
+        CardSuit.DIAMONDS -> {
+            simbolToWrite = "♦"
+            Color.Red
+        }
+        CardSuit.SPADES -> {
+            simbolToWrite = "♠"
+            Color.Black
+        }
+        CardSuit.HEARTS -> {
+            simbolToWrite = "♥"
+            Color.Red
+        }
+        CardSuit.CLUBS -> {
+            simbolToWrite = "♣"
+            Color.Black
+        }
+    }
+
+    val textOfCard:String = when (card.value){
+
+        CardValue.J -> "J"
+        CardValue.Q -> "Q"
+        CardValue.K -> "K"
+        CardValue.AS -> "AS"
+        else -> card.value.weight.toString()
+    }
+
+    Box(
+        modifier = Modifier
+            .size(60.dp, 90.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .border(2.dp, colorOfCard,RoundedCornerShape(8.dp))
+            .padding(4.dp)
+    ) {
+
+        Text("$textOfCard $simbolToWrite",color = colorOfCard)
+    }
+    Spacer(modifier = Modifier.width(8.dp))
 }
 
 
@@ -209,7 +308,7 @@ fun SimpleChat(
                         Text("${it.content} has joined the table.")
                     }
                     else -> {
-
+                        Text(it.content)
                     }
                 }
 

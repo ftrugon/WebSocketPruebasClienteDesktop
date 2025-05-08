@@ -6,5 +6,7 @@ enum class MessageType {
     TEXT_MESSAGE,
     ACTION,
     STATE_UPDATE,
-    PLAYER_CARDS
+    PLAYER_CARDS,
+    END_ROUND
+
 }
