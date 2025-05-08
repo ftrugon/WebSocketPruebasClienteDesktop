@@ -1,4 +1,4 @@
-
+package gameScreen
 enum class MessageType {
     PLAYER_READY,
     PLAYER_JOIN,

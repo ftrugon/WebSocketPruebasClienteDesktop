@@ -1,3 +1,5 @@
+package gameScreen
+
 import kotlinx.serialization.Serializable
 
 @Serializable
