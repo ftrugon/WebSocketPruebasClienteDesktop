@@ -325,9 +325,10 @@ fun SimpleChat(
                         Text(it.content)
                     }
                 }
-
             }
         }
+
+
 
         LaunchedEffect(messages.size) {
             val index = if (messages.isEmpty()) 0 else messages.size - 1
