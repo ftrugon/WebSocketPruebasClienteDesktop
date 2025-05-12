@@ -115,13 +115,14 @@ fun Register() {
                 val userToAd = RegistrarUsuarioDTO(viewModel.username,viewModel.password,viewModel.repeatPassword)
 
                 isCharging = true
+
                 val (token, success) = ApiData.registrarUsuario(userToAd).await()
                 isCharging = false
                 if (success) {
                     navigator.push(LoginScreen())
                 } else {
                     if (token.contains("401")){
-                        errorMessage = "Registration Failed!"
+                        errorMessage = "Registration Failed!: $token"
                     }else{
                         errorMessage = token
                     }
