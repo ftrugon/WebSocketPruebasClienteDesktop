@@ -67,15 +67,15 @@ class RegisterScreen : Screen {
 @Composable
 fun Register() {
 
-    val navigator = LocalNavigator.currentOrThrow
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var repeatPassword by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
 
+    val coroutineScope = rememberCoroutineScope()
+    val viewModel = remember { RegisterViewModel() }
+    val navigator = LocalNavigator.currentOrThrow
+
+    var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isCharging by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+
 
     if (isCharging) {
         CircularProgressIndicator(modifier = Modifier.padding(16.dp))
@@ -85,13 +85,25 @@ fun Register() {
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    CampoAlgo("Username", username,{username = it},false)
+    CampoAlgo(
+        "Username",
+        viewModel.username,
+        {viewModel.onUsernameChange(it)},
+        false)
 
     Spacer(modifier = Modifier.height(12.dp))
 
-    CampoAlgo("Password",password,{password = it}, true)
+    CampoAlgo(
+        "Password",
+        viewModel.password,
+        {viewModel.onPasswordChange(it)},
+        true)
 
-    CampoAlgo("Repeat Password",repeatPassword,{repeatPassword = it}, true)
+    CampoAlgo(
+        "Repeat Password",
+        viewModel.repeatPassword,
+        {viewModel.onRepeatPasswordChange(it)},
+        true)
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -100,7 +112,7 @@ fun Register() {
 
             coroutineScope.launch{
 
-                val userToAd = RegistrarUsuarioDTO(username,password,repeatPassword)
+                val userToAd = RegistrarUsuarioDTO(viewModel.username,viewModel.password,viewModel.repeatPassword)
 
                 isCharging = true
                 val (token, success) = ApiData.registrarUsuario(userToAd).await()
@@ -111,7 +123,7 @@ fun Register() {
                     if (token.contains("401")){
                         errorMessage = "Registration Failed!"
                     }else{
-                        errorMessage = "Error en la conexion"
+                        errorMessage = token
                     }
 
                     showError = true

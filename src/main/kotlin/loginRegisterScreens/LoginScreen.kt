@@ -69,13 +69,18 @@ class LoginScreen : Screen {
 fun Login() {
 
     val navigator = LocalNavigator.currentOrThrow
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var showError by remember { mutableStateOf(false) }
+    val viewModel = remember { LoginViewModel() }
+    val coroutineScope = rememberCoroutineScope()
 
+//    var username by remember { mutableStateOf(viewModel.username) }
+//    var password by remember { mutableStateOf(viewModel.password) }
+
+    //var username by remember { mutableStateOf("") }
+    //var password by remember { mutableStateOf("") }
+    var showError by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isCharging by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
+
 
 
     if (isCharging) {
@@ -86,9 +91,9 @@ fun Login() {
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    CampoAlgo("Username", username,{username = it},false)
+    CampoAlgo("Username", viewModel.username,{viewModel.onUsernameChange(it)},false)
 
-    CampoAlgo("Password",password,{password = it}, true)
+    CampoAlgo("Password",viewModel.password,{ viewModel.onPasswordChange(it)}, true)
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -98,7 +103,7 @@ fun Login() {
             coroutineScope.launch{
 
                 isCharging = true
-                val (token, success) = ApiData.getToken(username, password).await()
+                val (token, success) = ApiData.getToken(viewModel.username, viewModel.password).await()
                 isCharging = false
                 if (success) {
                     println("Successfully logged in!")
