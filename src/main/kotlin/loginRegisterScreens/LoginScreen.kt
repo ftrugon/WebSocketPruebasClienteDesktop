@@ -1,5 +1,6 @@
 package loginRegisterScreens
 
+import mainMenuScreen.MainMenuScreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -49,8 +50,11 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import cafe.adriel.voyager.transitions.SlideTransition
 import kotlinx.coroutines.launch
+import welcomeScreen.WelcomeScreen
 
 class LoginScreen : Screen {
 
@@ -100,23 +104,23 @@ fun Login() {
     Button(
         onClick ={
 
-            coroutineScope.launch{
-
-                isCharging = true
-                val (token, success) = ApiData.getToken(viewModel.username, viewModel.password).await()
-                isCharging = false
-                if (success) {
-                    println("Successfully logged in!")
-                } else {
-                    if (token.contains("401")){
-                        errorMessage = "Login incorrecto"
-                    }else{
-                        errorMessage = "Error en la conexion"
-                    }
-
-                    showError = true
-                }
-            }
+//            coroutineScope.launch{
+//
+//                isCharging = true
+//                val (token, success) = ApiData.getToken(viewModel.username, viewModel.password).await()
+//                isCharging = false
+//                if (success) {
+                    navigator.push(MainMenuScreen())
+//                } else {
+//                    if (token.contains("401")){
+//                        errorMessage = "Login incorrecto"
+//                    }else{
+//                        errorMessage = "Error en la conexion"
+//                    }
+//
+//                    showError = true
+//                }
+//            }
 
         },
         modifier = Modifier.fillMaxWidth()
