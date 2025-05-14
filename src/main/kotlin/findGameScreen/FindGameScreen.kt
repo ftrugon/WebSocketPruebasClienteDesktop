@@ -1,6 +1,7 @@
 package findGameScreen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,14 +14,25 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
 import androidx.compose.material.Card
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.Window
 import cafe.adriel.voyager.core.screen.Screen
 import data.model.Table
 import mainMenuScreen.ActualScreen
@@ -74,28 +86,56 @@ fun findGame(){
 
 @Composable
 fun TableListScreen(mesas: List<Table>) {
+
+    var selectedTable:Table? by remember { mutableStateOf(null) }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
         items(mesas) { mesa ->
-            TableCard(mesa)
+            TableCard(mesa){
+                selectedTable = mesa
+            }
             Spacer(modifier = Modifier.height(12.dp))
         }
+
     }
+
+    if (selectedTable != null) {
+        JoinTableDialog(selectedTable!!,{},{selectedTable = null})
+    }
+
 }
 
 @Composable
-fun TableCard(mesa: Table) {
+fun JoinTableDialog(
+    mesa: Table,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+
+    ) {
+
+    Dialog(onDismissRequest = onDismiss) {
+        Text("Quieres unirte a esta mesa?")
+    }
+}
+
+
+@Composable
+fun TableCard(mesa: Table, onClickTable: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = Color(0xFF1A1A1A).copy(alpha = 0.6f), // fondo oscuro semitransparente
+                color = Color(0xFF1A1A1A).copy(alpha = 0.6f),
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(16.dp)
+            .clickable {
+                onClickTable()
+            }
     ) {
         Column {
             Text(
