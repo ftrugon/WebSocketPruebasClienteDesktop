@@ -11,8 +11,12 @@ import kotlinx.coroutines.async
 object ApiData {
 
     var Actualtoken:String = ""
-
     var userData: Usuario? = null
+
+    init {
+        userData = Usuario("","fran","",40,"")
+    }
+
 
     val apiService = RetrofitServiceFactory.retrofitService
 
