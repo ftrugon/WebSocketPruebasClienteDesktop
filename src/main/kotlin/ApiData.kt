@@ -1,6 +1,7 @@
 import data.RetrofitServiceFactory
 import data.dto.RegistrarUsuarioDTO
 import data.dto.UsuarioLoginDTO
+import data.model.Table
 import data.model.Usuario
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -13,9 +14,10 @@ object ApiData {
     var Actualtoken:String = ""
     var userData: Usuario? = null
 
-    init {
-        userData = Usuario("","fran","",40,"")
-    }
+
+//    init {
+//        userData = Usuario("","fran","",40,"")
+//    }
 
 
     val apiService = RetrofitServiceFactory.retrofitService
@@ -50,4 +52,16 @@ object ApiData {
             }
         }
     }
+
+    fun getALlTables(): Deferred<List<Table>>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                val tareas = apiService.getAllTables("Bearer $Actualtoken")
+                return@async tareas
+            }catch(e:Exception){
+                return@async listOf()
+            }
+        }
+    }
+
 }

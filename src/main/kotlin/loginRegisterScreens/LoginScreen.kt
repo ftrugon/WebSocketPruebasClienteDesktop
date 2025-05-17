@@ -104,23 +104,23 @@ fun Login() {
     Button(
         onClick ={
 
-//            coroutineScope.launch{
-//
-//                isCharging = true
-//                val (token, success) = ApiData.getToken(viewModel.username, viewModel.password).await()
-//                isCharging = false
-//                if (success) {
+            coroutineScope.launch{
+
+                isCharging = true
+                val (token, success) = ApiData.getToken(viewModel.username, viewModel.password).await()
+                isCharging = false
+                if (success) {
                     navigator.push(MainMenuScreen())
-//                } else {
-//                    if (token.contains("401")){
-//                        errorMessage = "Login incorrecto"
-//                    }else{
-//                        errorMessage = "Error en la conexion"
-//                    }
-//
-//                    showError = true
-//                }
-//            }
+                } else {
+                    if (token.contains("401")){
+                        errorMessage = "Login incorrecto"
+                    }else{
+                        errorMessage = "Error en la conexion"
+                    }
+
+                    showError = true
+                }
+            }
 
         },
         modifier = Modifier.fillMaxWidth()

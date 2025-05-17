@@ -40,6 +40,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import data.model.Table
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -51,9 +55,19 @@ import okhttp3.WebSocketListener
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
+class GameScreen(val idTable: String, val bigBlind: Int) : Screen {
+    @Composable
+    override fun Content() {
+        App(idTable,bigBlind)
+    }
+}
+
 
 @Composable
-fun App() {
+fun App(idTable: String,bigBlind: Int) {
+
+    val navigator = LocalNavigator.currentOrThrow
+
     val listState = rememberLazyListState()
     val messages = remember { mutableStateListOf<Message>() }
     var inputMessage by remember { mutableStateOf("") }
@@ -72,7 +86,7 @@ fun App() {
     // Función para abrir WS
     fun setupWebSocket() {
         val request = Request.Builder()
-            .url("ws://localhost:8080/game/2")
+            .url("ws://localhost:8080/game/$idTable/$bigBlind")
             .build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
@@ -98,10 +112,14 @@ fun App() {
                 }
             }
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                scope.launch { isConnected = false }
+                scope.launch {
+                    isConnected = false
+                    navigator.pop()}
             }
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                scope.launch { isConnected = false }
+                scope.launch {
+                    isConnected = false
+                    navigator.pop()}
                 t.printStackTrace()
             }
         })
@@ -127,6 +145,7 @@ fun App() {
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = {
                     webSocket?.close(1000, "Usuario cerró la conexión")
+
                 }) {
                     Text("Desconectar")
                 }
@@ -350,8 +369,6 @@ fun SimpleChat(
                 }
             }
         )
-
-
     }
 }
 

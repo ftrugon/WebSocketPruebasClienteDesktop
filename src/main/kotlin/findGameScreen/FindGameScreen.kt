@@ -18,24 +18,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
-import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,14 +40,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import data.model.Table
-import loginRegisterScreens.CampoAlgo
+import gameScreen.GameScreen
 import mainMenuScreen.ActualScreen
 import mainMenuScreen.ColumnaIzquierda
 
@@ -71,6 +66,11 @@ class FindGameScreen: Screen {
 @Composable
 fun findGame(){
 
+    var allTables by remember { mutableStateOf(listOf<Table>()) }
+
+    LaunchedEffect(Unit) {
+        allTables = ApiData.getALlTables().await()
+    }
 
     // Pillar de la base de datos
     val mesas = mutableListOf<Table>(
@@ -97,12 +97,14 @@ fun findGame(){
     )
 
 
-    TableListScreen(mesas)
+    TableListScreen(allTables)
 
 }
 
 @Composable
 fun TableListScreen(mesas: List<Table>) {
+
+    val navigator = LocalNavigator.currentOrThrow
 
     var showFiltered by remember { mutableStateOf(false) }
     var selectedTable:Table? by remember { mutableStateOf(null) }
@@ -145,24 +147,24 @@ fun TableListScreen(mesas: List<Table>) {
                 )
             }
 
-            Box(modifier = Modifier.fillMaxWidth().weight(1f),
-                contentAlignment = Alignment.Center) {
-                Button(
-                    onClick = { showFiltered = !showFiltered },
-                    colors = ButtonDefaults.buttonColors(Color.Gray)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Show only joinable tables",
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        if (showFiltered) "All tables" else "Only joinable tables",
-                        color = Color.White
-                    )
-                }
-            }
+//            Box(modifier = Modifier.fillMaxWidth().weight(1f),
+//                contentAlignment = Alignment.Center) {
+//                Button(
+//                    onClick = { showFiltered = !showFiltered },
+//                    colors = ButtonDefaults.buttonColors(Color.Gray)
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Search,
+//                        contentDescription = "Show only joinable tables",
+//                        tint = Color.White
+//                    )
+//                    Spacer(modifier = Modifier.width(6.dp))
+//                    Text(
+//                        if (showFiltered) "All tables" else "Only joinable tables",
+//                        color = Color.White
+//                    )
+//                }
+//            }
         }
 
         val filteredTables = if (showFiltered) {
@@ -203,7 +205,7 @@ fun TableListScreen(mesas: List<Table>) {
 
         if (selectedTable != null) {
             JoinTableDialog(selectedTable!!,{
-                // ir y conectarte a la mesa
+                navigator.push(GameScreen(selectedTable!!._id,selectedTable!!.bigBlind))
             },{selectedTable = null})
         }
     }

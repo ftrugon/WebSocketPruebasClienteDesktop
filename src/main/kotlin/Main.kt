@@ -6,6 +6,7 @@ import androidx.compose.ui.window.rememberWindowState
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.ScaleTransition
 import cafe.adriel.voyager.transitions.SlideTransition
+import gameScreen.App
 import welcomeScreen.WelcomeScreen
 
 fun main() = application {
@@ -17,6 +18,8 @@ fun main() = application {
         state = rememberWindowState(width = 1000.dp, height = 700.dp),
     ) {
 
+
+        //App()
         MaterialTheme {
             Navigator(WelcomeScreen()){
                 SlideTransition(it)

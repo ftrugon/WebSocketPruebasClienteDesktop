@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -121,14 +122,18 @@ fun MainMenu(){
                     .fillMaxHeight()
                     .padding(4.dp)
                     .background(Color.Gray.copy(alpha = 0.40f))
-            )
+            ){
+                Text("Profile picture")
+            }
             Box(
                 modifier = Modifier
                     .weight(2f)
                     .fillMaxHeight()
                     .padding(4.dp)
                     .background(Color.Gray.copy(alpha = 0.40f))
-            )
+            ){
+                Text("Num of tokens")
+            }
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -140,33 +145,29 @@ fun MainMenu(){
                         .fillMaxWidth()
                         .padding(4.dp)
                         .background(Color.DarkGray.copy(alpha = 0.40f))
-                )
+                ){
+                    Text("Add tokens")
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .padding(4.dp)
                         .background(Color.DarkGray.copy(alpha = 0.40f))
-                )
+                ){
+                    Text("Retire tokens")
+                }
             }
         }
 
         // Fila 2
-        Row(Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .weight(1.5f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1.5f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            )
+        Row(modifier = Modifier
+            .weight(1f)
+            .fillMaxSize()
+            .padding(4.dp)
+            .background(Color.Gray.copy(alpha = 0.40f))) {
+            Text("Si me da tiempo un historial de todas las apuiestas hechas en las mesas")
+
         }
 
         // Fila 3
