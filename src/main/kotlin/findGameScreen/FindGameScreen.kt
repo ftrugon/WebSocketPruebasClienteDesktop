@@ -69,33 +69,10 @@ fun findGame(){
     var allTables by remember { mutableStateOf(listOf<Table>()) }
 
     LaunchedEffect(Unit) {
+
         allTables = ApiData.getALlTables().await()
+
     }
-
-    // Pillar de la base de datos
-    val mesas = mutableListOf<Table>(
-        Table("","Mesa españoles por aquí", "Mesa de 5 españoles, nos falta 1", 5, 5),
-        Table("","High Rollers", "Only high-stakes players, join if you dare", 3, 100),
-        Table("","Casual vibes", "Chill table, just here for fun", 4, 10),
-        Table("","Noche de póker", "Partida amistosa entre colegas", 6, 20),
-        Table("","The Bluff Masters", "Expert bluffers welcome", 2, 50),
-        Table("","Mesa latina", "Jugadores de toda Latinoamérica", 4, 25),
-        Table("","Gringos welcome", "Open table for anyone, beginners too", 1, 5),
-        Table("","Mesa full española", "Solo españoles, buen rollo", 6, 10),
-        Table("","Noobs & Pros", "Mixta, novatos y expertos", 3, 15),
-        Table("","All In Fiesta", "Aquí venimos a arriesgar", 5, 50),
-        Table("","Late Night Poker", "Partida nocturna, ritmo tranquilo", 4, 20),
-        Table("","Let's gamble", "We don’t fold here", 5, 100),
-        Table("","Poker de barrio", "Los de siempre, pero con cartas", 6, 10),
-        Table("","Grind Session", "Serious play, no chatting", 2, 200),
-        Table("","Mesa de paso", "Para partidas rápidas", 3, 10),
-        Table("","Friendly Fire", "Jugamos duro pero con respeto", 4, 25),
-        Table("","All welcome", "International table, English only", 5, 20),
-        Table("","Póker en pijama", "Para los que juegan desde la cama", 6, 5),
-        Table("","Crazy Blinds", "Suben cada ronda", 2, 150),
-        Table("","Mesa sin miedo", "Aquí nadie se rinde", 3, 30)
-    )
-
 
     TableListScreen(allTables)
 
@@ -205,6 +182,7 @@ fun TableListScreen(mesas: List<Table>) {
 
         if (selectedTable != null) {
             JoinTableDialog(selectedTable!!,{
+                print(selectedTable!!._id)
                 navigator.push(GameScreen(selectedTable!!._id,selectedTable!!.bigBlind))
             },{selectedTable = null})
         }
@@ -250,7 +228,7 @@ fun JoinTableDialog(
                     }
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    val canJoin = if (mesa.numPlayers < 6) true else true
+                    val canJoin = mesa.numPlayers < 6
 
                     TextButton(
                         onClick = onConfirm,
@@ -262,8 +240,6 @@ fun JoinTableDialog(
                 }
             }
         }
-
-
     }
 }
 
@@ -274,8 +250,9 @@ fun TableCard(mesa: Table, onClickTable: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+
             .background(
-                color = Color(0xFF1A1A1A).copy(alpha = 0.6f),
+                color = Color.LightGray.copy(alpha = 0.40f),
                 shape = RoundedCornerShape(16.dp)
             )
             .padding(16.dp)
@@ -288,13 +265,13 @@ fun TableCard(mesa: Table, onClickTable: () -> Unit) {
                 text = mesa.title,
                 style = MaterialTheme.typography.h3.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = Color.Black
                 )
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = mesa.desc,
-                style = MaterialTheme.typography.body1.copy(color = Color(0xFFDDDDDD))
+                style = MaterialTheme.typography.body1.copy(color = Color.DarkGray)
             )
             Spacer(modifier = Modifier.height(10.dp))
             Row(
@@ -303,11 +280,11 @@ fun TableCard(mesa: Table, onClickTable: () -> Unit) {
             ) {
                 Text(
                     text = "Active players: ${mesa.numPlayers}/6",
-                    style = MaterialTheme.typography.body2.copy(color = Color.Gray)
+                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray)
                 )
                 Text(
                     text = "Big blind: ${mesa.bigBlind}",
-                    style = MaterialTheme.typography.body2.copy(color = Color.Gray)
+                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray)
                 )
             }
         }

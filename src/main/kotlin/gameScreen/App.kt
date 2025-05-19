@@ -86,7 +86,7 @@ fun App(idTable: String,bigBlind: Int) {
     // Función para abrir WS
     fun setupWebSocket() {
         val request = Request.Builder()
-            .url("ws://localhost:8080/game/$idTable/$bigBlind")
+            .url("ws://localhost:8080/game/${idTable}")
             .build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {

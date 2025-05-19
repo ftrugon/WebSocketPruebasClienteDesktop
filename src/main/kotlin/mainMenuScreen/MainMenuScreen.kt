@@ -1,5 +1,7 @@
 package mainMenuScreen
 
+import ApiData.Actualtoken
+import ApiData.apiService
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -19,6 +22,11 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,7 +36,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import data.ApiService
+import data.model.Usuario
 import findGameScreen.FindGameScreen
+import okhttp3.Dispatcher
+import org.jetbrains.skia.Data
 import userProfileScreen.UserProfileScreen
 
 class MainMenuScreen : Screen {
@@ -107,85 +119,107 @@ fun ColumnaIzquierda(
 @Composable
 fun MainMenu(){
 
+    var userInfo: Usuario? = null
 
-    // Main content
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-    ) {
-        // Fila 1
-        Row(Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .weight(2f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            ){
-                Text("Profile picture")
+    var isCharging by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isCharging = true
+        userInfo = ApiData.getUserData().await()
+        isCharging = false
+    }
+
+
+
+    if (isCharging) {
+        CircularProgressIndicator()
+    }else{
+
+        // Main content
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ) {
+            // Fila 1
+            Row(Modifier.weight(1f)) {
+                Box(
+                    modifier = Modifier
+                        .weight(2f)
+                        .fillMaxHeight()
+                        .padding(4.dp)
+                        .background(Color.Gray.copy(alpha = 0.40f))
+                ){
+                    Text("Profile picture")
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(2f)
+                        .fillMaxHeight()
+                        .padding(4.dp)
+                        .background(Color.Gray.copy(alpha = 0.40f))
+                ){
+                    Text("${userInfo?._id}")
+                    Text("${userInfo?.tokens}")
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(4.dp)
+                            .background(Color.DarkGray.copy(alpha = 0.40f))
+                    ){
+                        Text("Add tokens")
+                    }
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(4.dp)
+                            .background(Color.DarkGray.copy(alpha = 0.40f))
+                    ){
+                        Text("Retire tokens")
+                    }
+                }
             }
-            Box(
-                modifier = Modifier
-                    .weight(2f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            ){
-                Text("Num of tokens")
+
+            // Fila 2
+            Row(modifier = Modifier
+                .weight(1f)
+                .fillMaxSize()
+                .padding(4.dp)
+                .background(Color.Gray.copy(alpha = 0.40f))) {
+                Text("Si me da tiempo un historial de todas las apuiestas hechas en las mesas")
+
             }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-            ) {
+
+            // Fila 3
+            Row(Modifier.weight(1f)) {
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
+                        .fillMaxHeight()
                         .padding(4.dp)
-                        .background(Color.DarkGray.copy(alpha = 0.40f))
+                        .background(Color.Gray.copy(alpha = 0.40f))
                 ){
-                    Text("Add tokens")
+                    Text("${userInfo?.username}")
                 }
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth()
+                        .fillMaxHeight()
                         .padding(4.dp)
-                        .background(Color.DarkGray.copy(alpha = 0.40f))
+                        .background(Color.Gray.copy(alpha = 0.40f))
                 ){
-                    Text("Retire tokens")
                 }
             }
-        }
-
-        // Fila 2
-        Row(modifier = Modifier
-            .weight(1f)
-            .fillMaxSize()
-            .padding(4.dp)
-            .background(Color.Gray.copy(alpha = 0.40f))) {
-            Text("Si me da tiempo un historial de todas las apuiestas hechas en las mesas")
-
-        }
-
-        // Fila 3
-        Row(Modifier.weight(1f)) {
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            )
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(Color.Gray.copy(alpha = 0.40f))
-            )
         }
     }
+
+
 }

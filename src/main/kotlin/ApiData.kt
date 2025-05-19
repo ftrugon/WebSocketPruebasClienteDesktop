@@ -64,4 +64,16 @@ object ApiData {
         }
     }
 
+    fun getUserData(): Deferred<Usuario?>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                userData = apiService.getUserInfo(Actualtoken)
+                return@async userData
+            }catch(e:Exception){
+                print("Error en la solicitud: ${e.message}")
+                return@async userData
+            }
+        }
+    }
+
 }
