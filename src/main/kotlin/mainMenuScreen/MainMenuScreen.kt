@@ -1,7 +1,5 @@
 package mainMenuScreen
 
-import ApiData.Actualtoken
-import ApiData.apiService
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,11 +34,8 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import data.ApiService
 import data.model.Usuario
 import findGameScreen.FindGameScreen
-import okhttp3.Dispatcher
-import org.jetbrains.skia.Data
 import userProfileScreen.UserProfileScreen
 
 class MainMenuScreen : Screen {
@@ -119,8 +114,7 @@ fun ColumnaIzquierda(
 @Composable
 fun MainMenu(){
 
-    var userInfo: Usuario? = null
-
+    var userInfo by remember { mutableStateOf<Usuario?>(null) }
     var isCharging by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -128,8 +122,6 @@ fun MainMenu(){
         userInfo = ApiData.getUserData().await()
         isCharging = false
     }
-
-
 
     if (isCharging) {
         CircularProgressIndicator()
@@ -159,7 +151,6 @@ fun MainMenu(){
                         .padding(4.dp)
                         .background(Color.Gray.copy(alpha = 0.40f))
                 ){
-                    Text("${userInfo?._id}")
                     Text("${userInfo?.tokens}")
                 }
                 Column(
@@ -194,7 +185,7 @@ fun MainMenu(){
                 .fillMaxSize()
                 .padding(4.dp)
                 .background(Color.Gray.copy(alpha = 0.40f))) {
-                Text("Si me da tiempo un historial de todas las apuiestas hechas en las mesas")
+                Text("informacion del usuario: ${userInfo?.username}, password: ${userInfo?._id}")
 
             }
 

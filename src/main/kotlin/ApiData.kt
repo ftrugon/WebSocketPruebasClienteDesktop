@@ -11,7 +11,7 @@ import kotlinx.coroutines.async
 
 object ApiData {
 
-    var Actualtoken:String = ""
+    var actualToken:String = ""
     var userData: Usuario? = null
 
 
@@ -27,12 +27,12 @@ object ApiData {
         return CoroutineScope(Dispatchers.IO).async {
             try {
                 val token = apiService.login(UsuarioLoginDTO(username, password))
-                print("Token recibido: ${token.token}")
-                Actualtoken = token.token
+                actualToken = token.token
+                println("Token recibido: $actualToken")
                 return@async Pair(token.token,true)
 
             } catch (e: Exception) {
-                print("Error en la solicitud: ${e.message}")
+                println("Error en la solicitud: ${e.message}")
                 return@async Pair("${e.message}",false)
             }
         }
@@ -43,11 +43,9 @@ object ApiData {
 
         return CoroutineScope(Dispatchers.IO).async {
             try {
-                val user = apiService.register(registrarUsuarioDTO)
-                print("USUARIO $user")
+                apiService.register(registrarUsuarioDTO)
                 return@async Pair("",true)
             }catch (e:Exception){
-                print("Error en la solicitud: ${e.message}")
                 return@async Pair("${e.message}",false)
             }
         }
@@ -56,8 +54,8 @@ object ApiData {
     fun getALlTables(): Deferred<List<Table>>{
         return CoroutineScope(Dispatchers.IO).async {
             try {
-                val tareas = apiService.getAllTables("Bearer $Actualtoken")
-                return@async tareas
+                val tables = apiService.getAllTables("Bearer $actualToken")
+                return@async tables
             }catch(e:Exception){
                 return@async listOf()
             }
@@ -66,11 +64,12 @@ object ApiData {
 
     fun getUserData(): Deferred<Usuario?>{
         return CoroutineScope(Dispatchers.IO).async {
-            try {
-                userData = apiService.getUserInfo(Actualtoken)
+            println("intentado pillar user info")
+            userData = apiService.getUserInfo("Bearer $actualToken")
+
+            try {                println("$userData")
                 return@async userData
             }catch(e:Exception){
-                print("Error en la solicitud: ${e.message}")
                 return@async userData
             }
         }

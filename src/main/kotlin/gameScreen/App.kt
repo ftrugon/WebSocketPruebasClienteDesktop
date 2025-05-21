@@ -55,16 +55,16 @@ import okhttp3.WebSocketListener
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-class GameScreen(val idTable: String, val bigBlind: Int) : Screen {
+class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage ) : Screen {
     @Composable
     override fun Content() {
-        App(idTable,bigBlind)
+        App(idTable, playerInfo)
     }
 }
 
 
 @Composable
-fun App(idTable: String,bigBlind: Int) {
+fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
     val navigator = LocalNavigator.currentOrThrow
 
@@ -174,8 +174,7 @@ fun App(idTable: String,bigBlind: Int) {
                 }
 
                 Button(onClick = {
-                    val player = PlayerInfoMessage(inputMessage, 100)
-                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(player))
+                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
                     webSocket?.send(Json.encodeToString(msg))
                     inputMessage = ""
                 }, enabled = isConnected) {

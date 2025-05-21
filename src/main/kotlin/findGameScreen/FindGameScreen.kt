@@ -181,67 +181,11 @@ fun TableListScreen(mesas: List<Table>) {
         }
 
         if (selectedTable != null) {
-            JoinTableDialog(selectedTable!!,{
-                print(selectedTable!!._id)
-                navigator.push(GameScreen(selectedTable!!._id,selectedTable!!.bigBlind))
-            },{selectedTable = null})
+            JoinTableDialog(selectedTable!!,navigator,{selectedTable = null})
         }
     }
 }
 
-@Composable
-fun JoinTableDialog(
-    mesa: Table,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Dialog(onDismissRequest = onDismiss) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    color = Color(0xFF1A1A1A),
-                    shape = RoundedCornerShape(16.dp)
-                )
-        ){
-            Column(
-                modifier = Modifier
-                    .padding(24.dp)
-            ) {
-                Text(
-                    text = "Do you want to join this table?",
-                    style = MaterialTheme.typography.h3,
-                    color = Color.White
-                )
-                Text(
-                    text = "${mesa.title} -> ${mesa.numPlayers}/6",
-                    style = MaterialTheme.typography.body2,
-                    color = Color.White
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("Cancel", color = Color.LightGray)
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    val canJoin = mesa.numPlayers < 6
-
-                    TextButton(
-                        onClick = onConfirm,
-                        enabled = canJoin,
-                    ) {
-
-                        Text("Join", color = Color.White)
-                    }
-                }
-            }
-        }
-    }
-}
 
 
 
