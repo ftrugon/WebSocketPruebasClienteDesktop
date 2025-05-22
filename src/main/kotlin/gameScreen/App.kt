@@ -75,6 +75,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
     val scope = rememberCoroutineScope()
     var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
     var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
+
+    var hasJoined by remember { mutableStateOf(false) }
+
     // OkHttpClient + WebSocket state
     val client = remember {
         OkHttpClient.Builder()
@@ -139,11 +142,19 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
             Text(if (isConnected) "Conectado" else "Desconectado")
             Spacer(Modifier.height(8.dp))
 
+            if (!hasJoined){
+                setupWebSocket()
+                hasJoined = true
+                val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
+                webSocket?.send(Json.encodeToString(msg))
+                inputMessage = ""
+            }
+
             // Row Conectar / Desconectar
             Row {
-                Button(onClick = { setupWebSocket() }) {
-                    Text("Conectar")
-                }
+//                Button(onClick = { setupWebSocket() }) {
+//                    Text("Conectar")
+//                }
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = {
                     webSocket?.close(1000, "Usuario cerró la conexión")
@@ -167,21 +178,21 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
             // Botones de acción
             Row {
-                Button(onClick = {
-                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
-                    webSocket?.send(Json.encodeToString(msg))
-                    inputMessage = ""
-                }, enabled = isConnected) {
-                    Text("Enviar mensaje")
-                }
-
-                Button(onClick = {
-                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
-                    webSocket?.send(Json.encodeToString(msg))
-                    inputMessage = ""
-                }, enabled = isConnected) {
-                    Text("Enviar nombre")
-                }
+//                Button(onClick = {
+//                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
+//                    webSocket?.send(Json.encodeToString(msg))
+//                    inputMessage = ""
+//                }, enabled = isConnected) {
+//                    Text("Enviar mensaje")
+//                }
+//
+//                Button(onClick = {
+//                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
+//                    webSocket?.send(Json.encodeToString(msg))
+//                    inputMessage = ""
+//                }, enabled = isConnected) {
+//                    Text("Enviar nombre")
+//                }
 
                 Button(onClick = {
                     val msg = Message(MessageType.PLAYER_READY, "true")
