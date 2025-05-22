@@ -123,7 +123,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                 t.printStackTrace()
             }
         })
-    }
+}
+
+    //setupWebSocket()
 
     Row(modifier = Modifier.fillMaxSize()
         //.padding(16.dp)
