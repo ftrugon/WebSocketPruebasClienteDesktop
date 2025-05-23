@@ -1,5 +1,6 @@
 package gameScreen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
@@ -77,6 +80,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
     var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
 
     var hasJoined by remember { mutableStateOf(false) }
+    var handRankingText by remember { mutableStateOf("") }
 
     // OkHttpClient + WebSocket state
     val client = remember {
@@ -109,7 +113,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                         commCards = mutableListOf<Card>()
                         userCards = mutableListOf<Card>()
                     }
-
+                    if (payload.messageType == MessageType.HAND_RANKING){
+                        handRankingText = payload.content
+                    }
                     messages.add(payload)
 
                 }
@@ -127,8 +133,6 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
             }
         })
 }
-
-    //setupWebSocket()
 
     Row(modifier = Modifier.fillMaxSize()
         //.padding(16.dp)
@@ -258,7 +262,6 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                 DrawCards(userCards)
             }
 
-
         }
 
 
@@ -276,48 +279,54 @@ fun DrawCards(cardList: List<Card>){
     }
 }
 
+
 @Composable
 fun DrawCard(card: Card) {
 
 
-    val simbolToWrite:String
     val colorOfCard:Color = when (card.suit) {
         CardSuit.DIAMONDS -> {
-            simbolToWrite = "♦"
             Color.Red
         }
         CardSuit.SPADES -> {
-            simbolToWrite = "♠"
             Color.Black
         }
         CardSuit.HEARTS -> {
-            simbolToWrite = "♥"
             Color.Red
         }
         CardSuit.CLUBS -> {
-            simbolToWrite = "♣"
             Color.Black
         }
+
+        CardSuit.NONE -> {
+            Color.Transparent
+        }
+
     }
 
-    val textOfCard:String = when (card.value){
+    var imageUrl:String = ""
 
-        CardValue.J -> "J"
-        CardValue.Q -> "Q"
-        CardValue.K -> "K"
-        CardValue.AS -> "AS"
-        else -> card.value.weight.toString()
+    if (card.suit != CardSuit.NONE) {
+        val cardSuitString = card.suit.toString().lowercase()
+        val cardValueWeight = if (card.value == CardValue.AS) 1 else card.value.weight.toString()
+        imageUrl = "/cardsImages/$cardSuitString/${cardSuitString}_$cardValueWeight.png"
+    }else{
+        imageUrl = "/cardsImages/card.png"
     }
 
     Box(
         modifier = Modifier
-            .size(60.dp, 90.dp)
+            .size(80.dp, 120.dp)
             .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, colorOfCard,RoundedCornerShape(8.dp))
-            .padding(4.dp)
+            .border(2.dp, colorOfCard, RoundedCornerShape(8.dp))
+            //.padding(4.dp)
     ) {
-
-        Text("$textOfCard $simbolToWrite",color = colorOfCard)
+        Image(
+            painter = painterResource(imageUrl),
+            contentDescription = "",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
     }
     Spacer(modifier = Modifier.width(8.dp))
 }
@@ -333,7 +342,6 @@ fun SimpleChat(
 ) {
 
     var inputMessage by remember { mutableStateOf("") }
-
 
     Column {
         LazyColumn(
@@ -352,14 +360,24 @@ fun SimpleChat(
                     MessageType.PLAYER_JOIN -> {
                         Text("${it.content} has joined the table.")
                     }
-                    else -> {
+                    MessageType.PLAYER_LEAVE -> {
+                        Text("${it.content} has leaved the table.")
+                    }
+                    MessageType.SERVER_RESPONSE -> {
                         Text(it.content)
+                    }
+                    MessageType.NOTIFY_WINNER -> {
+                        Text(it.content)
+                    }
+                    MessageType.NOTIFY_TURN -> {
+                        Text(it.content)
+                    }
+                    else -> {
+
                     }
                 }
             }
         }
-
-
 
         LaunchedEffect(messages.size) {
             val index = if (messages.isEmpty()) 0 else messages.size - 1

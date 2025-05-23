@@ -8,5 +8,6 @@ enum class CardSuit {
     HEARTS,
     CLUBS,
     SPADES,
-    DIAMONDS
+    DIAMONDS,
+    NONE
 }
