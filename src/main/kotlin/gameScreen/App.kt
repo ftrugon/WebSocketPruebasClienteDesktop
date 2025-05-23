@@ -1,10 +1,15 @@
 package gameScreen
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,13 +46,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import data.model.Table
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -57,6 +66,8 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
+
 
 class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage ) : Screen {
     @Composable
@@ -73,7 +84,6 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
     val listState = rememberLazyListState()
     val messages = remember { mutableStateListOf<Message>() }
-    var inputMessage by remember { mutableStateOf("") }
     var isConnected by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
@@ -81,6 +91,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
     var hasJoined by remember { mutableStateOf(false) }
     var handRankingText by remember { mutableStateOf("") }
+    var showCards by remember { mutableStateOf(false) }
 
     // OkHttpClient + WebSocket state
     val client = remember {
@@ -105,16 +116,40 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
                     if (payload.messageType == MessageType.STATE_UPDATE){
                         commCards = Json.decodeFromString<MutableList<Card>>(payload.content)
+
+                        if (commCards.size == 3){
+                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+                        }else if (commCards.size == 4){
+                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+                        }
+
                     }
                     if (payload.messageType == MessageType.PLAYER_CARDS){
                         userCards = Json.decodeFromString<MutableList<Card>>(payload.content)
                     }
                     if (payload.messageType == MessageType.END_ROUND){
+                        showCards = false
+
+                        delay(800)
+
                         commCards = mutableListOf<Card>()
                         userCards = mutableListOf<Card>()
+
                     }
                     if (payload.messageType == MessageType.HAND_RANKING){
                         handRankingText = payload.content
+                    }
+                    if (payload.messageType == MessageType.START_ROUND){
+                        commCards = mutableListOf<Card>(
+                            Card(CardSuit.NONE, CardValue.NONE),
+                            Card(CardSuit.NONE, CardValue.NONE),
+                            Card(CardSuit.NONE, CardValue.NONE),
+                            Card(CardSuit.NONE, CardValue.NONE),
+                            Card(CardSuit.NONE, CardValue.NONE)
+                        )
+                        showCards = true
+
                     }
                     messages.add(payload)
 
@@ -151,14 +186,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                 hasJoined = true
                 val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
                 webSocket?.send(Json.encodeToString(msg))
-                inputMessage = ""
             }
 
-            // Row Conectar / Desconectar
             Row {
-//                Button(onClick = { setupWebSocket() }) {
-//                    Text("Conectar")
-//                }
                 Spacer(Modifier.width(8.dp))
                 Button(onClick = {
                     webSocket?.close(1000, "Usuario cerró la conexión")
@@ -170,34 +200,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 
             Spacer(Modifier.height(16.dp))
 
-            // Campo de texto genérico
-            OutlinedTextField(
-                value = inputMessage,
-                onValueChange = { inputMessage = it },
-                label = { Text("Mensaje") },
-                singleLine = true
-            )
-
-            Spacer(Modifier.height(8.dp))
 
             // Botones de acción
             Row {
-//                Button(onClick = {
-//                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
-//                    webSocket?.send(Json.encodeToString(msg))
-//                    inputMessage = ""
-//                }, enabled = isConnected) {
-//                    Text("Enviar mensaje")
-//                }
-//
-//                Button(onClick = {
-//                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
-//                    webSocket?.send(Json.encodeToString(msg))
-//                    inputMessage = ""
-//                }, enabled = isConnected) {
-//                    Text("Enviar nombre")
-//                }
-
                 Button(onClick = {
                     val msg = Message(MessageType.PLAYER_READY, "true")
                     webSocket?.send(Json.encodeToString(msg))
@@ -207,21 +212,15 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
             }
 
 
+            DrawCards(Modifier
+                .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp), // Altura para mostrar cartas
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // Aquí puedes mostrar tus cartas
-                DrawCards(commCards)
-            }
 
             Row (
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
-            ) {
+            )
+            {
 
                 Button(
                     onClick = {
@@ -253,14 +252,10 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp), // Altura para mostrar cartas
-                horizontalArrangement = Arrangement.Center
-            ) {
-                DrawCards(userCards)
-            }
+
+            DrawCards(Modifier
+                .fillMaxWidth(),userCards, fromBottom = true, visible = showCards)
+
 
         }
 
@@ -273,9 +268,43 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
 }
 
 @Composable
-fun DrawCards(cardList: List<Card>){
-    for (card in cardList){
-        DrawCard(card)
+fun DrawCards(
+    modifier: Modifier = Modifier,
+    cardList: List<Card>,
+    animationSpec: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing),
+    fromBottom: Boolean = true,
+    visible: Boolean = true // controla si está visible o no
+) {
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val density = LocalDensity.current
+        val offsetY = remember { Animatable(0f) }
+
+        LaunchedEffect(cardList, visible) {
+            val offScreenOffset = with(density) {
+                if (fromBottom) maxHeight.toPx() else -maxHeight.toPx()
+            }
+
+            if (visible) {
+                // Aparece: animar desde fuera hacia 0
+                offsetY.snapTo(offScreenOffset)
+                offsetY.animateTo(0f, animationSpec)
+            } else {
+                // Desaparece: animar desde 0 hacia fuera
+                offsetY.snapTo(0f)
+                offsetY.animateTo(offScreenOffset, animationSpec)
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .offset { IntOffset(0, offsetY.value.roundToInt()) }
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            for (card in cardList) {
+                DrawCard(card)
+            }
+        }
     }
 }
 
