@@ -100,7 +100,7 @@ fun JoinTableDialog(
                     TextButton(
                         onClick = {
                             navigator.push(GameScreen(mesa._id,
-                                PlayerInfoMessage(ApiData.userData?.username?:"",dineroSeleccionado.toInt())))
+                                PlayerInfoMessage(ApiData.userData?.username?:"",dineroSeleccionado.toInt()),mesa.title,))
                         },
                         enabled = canJoin,
                     ) {

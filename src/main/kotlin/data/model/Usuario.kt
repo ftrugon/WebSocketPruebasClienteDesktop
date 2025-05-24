@@ -5,6 +5,7 @@ data class Usuario(
     val username: String,
     var password: String,
     val tokens: Int,
-    val roles: String? = "USER"
+    val roles: String? = "USER",
+    var isBanned:Boolean = false,
 ) {
 }

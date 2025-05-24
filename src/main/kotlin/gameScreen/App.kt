@@ -27,11 +27,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonColors
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,22 +74,22 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 
-class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage ) : Screen {
+class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage,val tableTitle: String) : Screen {
     @Composable
     override fun Content() {
-        App(idTable, playerInfo)
+        App(idTable, playerInfo,tableTitle)
     }
 }
 
 
 @Composable
-fun App(idTable: String, playerInfo: PlayerInfoMessage) {
+fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 
     val navigator = LocalNavigator.currentOrThrow
 
     val listState = rememberLazyListState()
     val messages = remember { mutableStateListOf<Message>() }
-    var isConnected by remember { mutableStateOf(false) }
+    var isConnected by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
     var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
@@ -92,6 +97,8 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
     var hasJoined by remember { mutableStateOf(false) }
     var handRankingText by remember { mutableStateOf("") }
     var showCards by remember { mutableStateOf(false) }
+    var hasStartedRound by remember { mutableStateOf(false) }
+    var isReadyToPlay by remember { mutableStateOf(false) }
 
     // OkHttpClient + WebSocket state
     val client = remember {
@@ -101,7 +108,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
     }
     var webSocket by remember { mutableStateOf<WebSocket?>(null) }
 
-    // Función para abrir WS
+    // Función para abrir WS, meter esto en el viewmodel
     fun setupWebSocket() {
         val request = Request.Builder()
             .url("ws://localhost:8080/game/${idTable}")
@@ -114,6 +121,14 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                 val payload = Json.decodeFromString<Message>(text)
                 scope.launch {
 
+                    if (payload.messageType == MessageType.PLAYER_READY){
+                        val (name, isReady) = Json.decodeFromString<Pair<String, Boolean>>(payload.content)
+
+                        if (name == playerInfo.name){
+                            isReadyToPlay = isReady
+                        }
+
+                    }
                     if (payload.messageType == MessageType.STATE_UPDATE){
                         commCards = Json.decodeFromString<MutableList<Card>>(payload.content)
 
@@ -130,12 +145,13 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                     }
                     if (payload.messageType == MessageType.END_ROUND){
                         showCards = false
+                        handRankingText = ""
 
                         delay(800)
 
                         commCards = mutableListOf<Card>()
                         userCards = mutableListOf<Card>()
-
+                        hasStartedRound
                     }
                     if (payload.messageType == MessageType.HAND_RANKING){
                         handRankingText = payload.content
@@ -149,7 +165,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
                             Card(CardSuit.NONE, CardValue.NONE)
                         )
                         showCards = true
-
+                        hasStartedRound = true
                     }
                     messages.add(payload)
 
@@ -157,114 +173,177 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage) {
             }
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
                 scope.launch {
+
                     isConnected = false
-                    navigator.pop()}
+                    navigator.pop()
+
+                }
             }
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                 scope.launch {
                     isConnected = false
-                    navigator.pop()}
-                t.printStackTrace()
+                    navigator.pop()
+
+                }
             }
         })
 }
 
-    Row(modifier = Modifier.fillMaxSize()
-        //.padding(16.dp)
-    ) {
 
-        Column(
-            modifier = Modifier.weight(3f).fillMaxHeight(),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Box(){
+
+        // Imagen de fondo
+        Image(
+            painter = painterResource("in_game_image.png"),
+            contentDescription = "Fondo",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
         )
-        {
-            Text(if (isConnected) "Conectado" else "Desconectado")
-            Spacer(Modifier.height(8.dp))
 
-            if (!hasJoined){
-                setupWebSocket()
-                hasJoined = true
-                val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
-                webSocket?.send(Json.encodeToString(msg))
-            }
+        Row(modifier = Modifier.fillMaxSize()
+            //.padding(16.dp)
+        ) {
 
-            Row {
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = {
-                    webSocket?.close(1000, "Usuario cerró la conexión")
-
-                }) {
-                    Text("Desconectar")
-                }
-            }
-
-            Spacer(Modifier.height(16.dp))
+            Column(
+                modifier = Modifier.weight(3f).fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
+            {
+                Text(
+                    text = if (isConnected) "Connected to table: $tableTitle" else "Disconnected from table: $tableTitle",
+                    color = if (isConnected) Color(0xFF81C784) else Color(0xFFE57373),
+                )
+                Spacer(Modifier.height(8.dp))
 
 
-            // Botones de acción
-            Row {
-                Button(onClick = {
-                    val msg = Message(MessageType.PLAYER_READY, "true")
+                // meter esto en el viewmodel
+                if (!hasJoined){
+                    setupWebSocket()
+                    hasJoined = true
+                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
                     webSocket?.send(Json.encodeToString(msg))
-                }, enabled = isConnected) {
-                    Text("Listo para jugar")
                 }
+
+
+                DrawCards(Modifier
+                    .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
+
+
+                if (hasStartedRound)
+                {
+                    Column {
+                        Text(handRankingText)
+                        Row (
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        )
+                        {
+
+                            Button(
+                                onClick = {
+                                    val payload = BetPayload(BetAction.RAISE, 10)
+                                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                                    webSocket?.send(Json.encodeToString(msg)) }
+                                ,
+                                enabled = isConnected,
+                                modifier = Modifier.padding(horizontal = 10.dp)) {
+                                Text("Raise 10")
+                            }
+
+                            Button(onClick = {
+                                val payload = BetPayload(BetAction.CALL, 0)
+                                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                                webSocket?.send(Json.encodeToString(msg))
+                            }, enabled = isConnected,
+                                modifier = Modifier.padding(horizontal = 10.dp)) {
+                                Text("Call / Check")
+                            }
+
+                            Button(onClick = {
+                                val payload = BetPayload(BetAction.FOLD, 0)
+                                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+                                webSocket?.send(Json.encodeToString(msg))
+                            }, enabled = isConnected,
+                                modifier = Modifier.padding(horizontal = 10.dp)) {
+                                Text("Fold")
+                            }
+                        }
+                    }
+
+                }else
+                {
+
+                    val buttonColors = if (isReadyToPlay) {
+                        ButtonDefaults.buttonColors(
+                            backgroundColor = Color(0xFF81C784), // Verde menta
+                            contentColor = Color.White
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors(
+                            backgroundColor = Color(0xFFE57373), // Rojo coral suave
+                            contentColor = Color.White
+                        )
+                    }
+                    Button(onClick = {
+                        val msg = Message(MessageType.PLAYER_READY, "true")
+                        webSocket?.send(Json.encodeToString(msg))
+                    },
+                        enabled = isConnected,
+                        colors = buttonColors) {
+                        Text("ReadyToPlay")
+                    }
+                }
+
+                DrawCards(Modifier
+                    .fillMaxWidth(),userCards, fromBottom = true, visible = showCards)
+
+
             }
 
+            // chat de la derecha
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    //.width(350.dp)
+                    .weight(1f),
+                //  .padding(24.dp)
 
-            DrawCards(Modifier
-                .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
-
-
-            Row (
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                contentAlignment = Alignment.Center
             )
             {
 
-                Button(
-                    onClick = {
-                        val payload = BetPayload(BetAction.RAISE, 10)
-                        val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                        webSocket?.send(Json.encodeToString(msg)) }
-                    ,
-                    enabled = isConnected,
-                    modifier = Modifier.padding(horizontal = 10.dp)) {
-                    Text("Raise 10")
-                }
+                SimpleChat(listState,messages,webSocket,isConnected,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .background(Color.White.copy(alpha = 0.40f))
+                )
 
-                Button(onClick = {
-                    val payload = BetPayload(BetAction.CALL, 0)
-                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                    webSocket?.send(Json.encodeToString(msg))
-                }, enabled = isConnected,
-                    modifier = Modifier.padding(horizontal = 10.dp)) {
-                    Text("Call / Check")
-                }
-
-                Button(onClick = {
-                    val payload = BetPayload(BetAction.FOLD, 0)
-                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                    webSocket?.send(Json.encodeToString(msg))
-                }, enabled = isConnected,
-                    modifier = Modifier.padding(horizontal = 10.dp)) {
-                    Text("Fold")
-                }
             }
 
 
-            DrawCards(Modifier
-                .fillMaxWidth(),userCards, fromBottom = true, visible = showCards)
-
-
         }
 
 
-        Row(Modifier.weight(1f).fillMaxHeight().background(Color.Green)) {
-            SimpleChat(listState,messages,webSocket,isConnected,)
+        Button(
+            onClick = { webSocket?.close(4001,"") },
+            colors = ButtonDefaults.buttonColors(
+                backgroundColor = Color(0xFFE57373),
+                contentColor = Color.White
+            ),
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ExitToApp,
+                contentDescription = "Salir",
+                modifier = Modifier.size(20.dp)
+            )
         }
 
     }
+
+
 }
 
 @Composable
@@ -370,9 +449,10 @@ fun SimpleChat(
     modifier: Modifier = Modifier
 ) {
 
+    // meter la parte de escribir en el viewmodel
     var inputMessage by remember { mutableStateOf("") }
 
-    Column {
+    Column(modifier = modifier) {
         LazyColumn(
             state = listState,
             modifier = modifier.weight(1f),
@@ -384,7 +464,9 @@ fun SimpleChat(
                         ListItem(it)
                     }
                     MessageType.PLAYER_READY -> {
-                        Text("${it.content} is ready to play.")
+                        val (name, isReady) = Json.decodeFromString<Pair<String, Boolean>>(it.content)
+                        Text("$name is ${if (isReady) "ready" else "not ready" } to play.")
+
                     }
                     MessageType.PLAYER_JOIN -> {
                         Text("${it.content} has joined the table.")
@@ -413,21 +495,21 @@ fun SimpleChat(
             listState.scrollToItem(index)
         }
 
-        OutlinedTextField(
+        TextField(
             value = inputMessage,
             onValueChange = { inputMessage = it },
-            label = { Text("Mensaje") },
+            label = { Text("Send message") },
             singleLine = true,
             trailingIcon = {
                 IconButton(onClick = {
-                    val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
-                    webSocket?.send(Json.encodeToString(msg))
-                    inputMessage = ""
-                },enabled = isConnected) {
-                    Icon(Icons.Default.Send, contentDescription = "")
-                }
-            }
+                val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
+                webSocket?.send(Json.encodeToString(msg))
+                inputMessage = ""
+            },enabled = isConnected) {
+                Icon(Icons.Default.Send, contentDescription = "")
+            }}
         )
+
     }
 }
 
