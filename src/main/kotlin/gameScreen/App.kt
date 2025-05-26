@@ -27,15 +27,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonColors
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.runtime.Composable
@@ -59,9 +56,9 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import data.model.Table
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -89,6 +86,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 
     val listState = rememberLazyListState()
     val messages = remember { mutableStateListOf<Message>() }
+
     var isConnected by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
     var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
@@ -96,9 +94,10 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 
     var hasJoined by remember { mutableStateOf(false) }
     var handRankingText by remember { mutableStateOf("") }
-    var showCards by remember { mutableStateOf(false) }
+    var showCards by remember { mutableStateOf(true) }
     var hasStartedRound by remember { mutableStateOf(false) }
     var isReadyToPlay by remember { mutableStateOf(false) }
+    var players by remember { mutableStateOf(listOf<PlayerDataToShow>()) }
 
     // OkHttpClient + WebSocket state
     val client = remember {
@@ -143,15 +142,27 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
                     if (payload.messageType == MessageType.PLAYER_CARDS){
                         userCards = Json.decodeFromString<MutableList<Card>>(payload.content)
                     }
+                    if (payload.messageType == MessageType.NOTIFY_TURN) {
+                        val name = payload.content.split(":")[0]
+                        val tokens = payload.content.split(":")[1].toInt()
+
+                        println(payload.content)
+                        players.find { it.name == name }?.tokenAmount = tokens
+
+                        players = players.map {
+                            if (it.name == name) it.copy(tokenAmount = tokens) else it
+                        }
+                    }
                     if (payload.messageType == MessageType.END_ROUND){
                         showCards = false
                         handRankingText = ""
 
                         delay(800)
 
+                        isReadyToPlay = false
                         commCards = mutableListOf<Card>()
                         userCards = mutableListOf<Card>()
-                        hasStartedRound
+                        hasStartedRound = false
                     }
                     if (payload.messageType == MessageType.HAND_RANKING){
                         handRankingText = payload.content
@@ -164,8 +175,14 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
                             Card(CardSuit.NONE, CardValue.NONE),
                             Card(CardSuit.NONE, CardValue.NONE)
                         )
+
+                        //players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
+
                         showCards = true
                         hasStartedRound = true
+                    }
+                    if (payload.messageType == MessageType.SEND_PLAYER_DATA){
+                        players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
                     }
                     messages.add(payload)
 
@@ -190,7 +207,15 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 }
 
 
-    Box(){
+    // meter esto en el viewmodel
+    if (!hasJoined){
+        setupWebSocket()
+        hasJoined = true
+        val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
+        webSocket?.send(Json.encodeToString(msg))
+    }
+
+    Box{
 
         // Imagen de fondo
         Image(
@@ -204,34 +229,37 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
             //.padding(16.dp)
         ) {
 
-            Column(
-                modifier = Modifier.weight(3f).fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally
+
+            // Jugadores alrededor del círculo
+
+
+            // parte que enseña las cosas
+            BoxWithConstraints(
+                modifier = Modifier.weight(4f).fillMaxSize(),
+                contentAlignment = Alignment.Center
             )
             {
+
                 Text(
+                    modifier = Modifier.align(Alignment.TopCenter),
                     text = if (isConnected) "Connected to table: $tableTitle" else "Disconnected from table: $tableTitle",
                     color = if (isConnected) Color(0xFF81C784) else Color(0xFFE57373),
                 )
+
                 Spacer(Modifier.height(8.dp))
-
-
-                // meter esto en el viewmodel
-                if (!hasJoined){
-                    setupWebSocket()
-                    hasJoined = true
-                    val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
-                    webSocket?.send(Json.encodeToString(msg))
-                }
-
-
-                DrawCards(Modifier
-                    .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
-
 
                 if (hasStartedRound)
                 {
-                    Column {
+                    DrawCommCards(Modifier
+                        .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
+
+                    DrawPlayersAroundCircle(playerInfo.name,userCards,players)
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(8.dp)
+                    )
+                    {
                         Text(handRankingText)
                         Row (
                             modifier = Modifier.fillMaxWidth(),
@@ -275,28 +303,25 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 
                     val buttonColors = if (isReadyToPlay) {
                         ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFF81C784), // Verde menta
+                            backgroundColor = Color(0xFF81C784),
                             contentColor = Color.White
                         )
                     } else {
                         ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFFE57373), // Rojo coral suave
+                            backgroundColor = Color(0xFFE57373),
                             contentColor = Color.White
                         )
                     }
-                    Button(onClick = {
+                    Button(modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
+                        onClick = {
                         val msg = Message(MessageType.PLAYER_READY, "true")
                         webSocket?.send(Json.encodeToString(msg))
                     },
                         enabled = isConnected,
                         colors = buttonColors) {
-                        Text("ReadyToPlay")
+                        Text("Ready to play")
                     }
                 }
-
-                DrawCards(Modifier
-                    .fillMaxWidth(),userCards, fromBottom = true, visible = showCards)
-
 
             }
 
@@ -320,10 +345,9 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 
             }
 
-
         }
 
-
+        // boton de salir abajo derecha
         Button(
             onClick = { webSocket?.close(4001,"") },
             colors = ButtonDefaults.buttonColors(
@@ -332,7 +356,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
             ),
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(16.dp)
+                .padding(8.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.ExitToApp,
@@ -347,7 +371,7 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
 }
 
 @Composable
-fun DrawCards(
+fun DrawCommCards(
     modifier: Modifier = Modifier,
     cardList: List<Card>,
     animationSpec: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing),
@@ -381,7 +405,7 @@ fun DrawCards(
             horizontalArrangement = Arrangement.Center
         ) {
             for (card in cardList) {
-                DrawCard(card)
+                DrawCard(card,80,120)
             }
         }
     }
@@ -389,28 +413,7 @@ fun DrawCards(
 
 
 @Composable
-fun DrawCard(card: Card) {
-
-
-    val colorOfCard:Color = when (card.suit) {
-        CardSuit.DIAMONDS -> {
-            Color.Red
-        }
-        CardSuit.SPADES -> {
-            Color.Black
-        }
-        CardSuit.HEARTS -> {
-            Color.Red
-        }
-        CardSuit.CLUBS -> {
-            Color.Black
-        }
-
-        CardSuit.NONE -> {
-            Color.Transparent
-        }
-
-    }
+fun DrawCard(card: Card,cardWith: Int,cardHeight: Int) {
 
     var imageUrl:String = ""
 
@@ -424,9 +427,10 @@ fun DrawCard(card: Card) {
 
     Box(
         modifier = Modifier
-            .size(80.dp, 120.dp)
+            //.size(80.dp, 120.dp)
+            .size(cardWith.dp, cardHeight.dp)
             .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, colorOfCard, RoundedCornerShape(8.dp))
+
             //.padding(4.dp)
     ) {
         Image(
@@ -455,7 +459,7 @@ fun SimpleChat(
     Column(modifier = modifier) {
         LazyColumn(
             state = listState,
-            modifier = modifier.weight(1f),
+            modifier = Modifier.weight(1f),
             // reverseLayout = true
         ) {
             items(messages) {
@@ -481,7 +485,8 @@ fun SimpleChat(
                         Text(it.content)
                     }
                     MessageType.NOTIFY_TURN -> {
-                        Text(it.content)
+                        val name = it.content.split(":").first()
+                        Text("Turn of $name")
                     }
                     else -> {
 

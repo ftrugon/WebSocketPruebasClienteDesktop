@@ -21,7 +21,7 @@ fun main() = application {
         title = "Casino 404",
         //resizable = false,
         icon = painterResource("icon_image.png"),
-        state = rememberWindowState(width = 1000.dp, height = 700.dp),
+        state = rememberWindowState(width = 1100.dp, height = 900.dp)
     ) {
 
 
