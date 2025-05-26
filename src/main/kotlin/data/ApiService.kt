@@ -10,6 +10,8 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PUT
+import retrofit2.http.Path
 
 interface ApiService {
     @POST("/users/login")
@@ -17,6 +19,18 @@ interface ApiService {
 
     @POST("/users/register")
     suspend fun register(@Body registrarUsuarioDTO: RegistrarUsuarioDTO): UsuarioDTO
+
+    @PUT("/tokens/insertTokens/{amount}")
+    suspend fun insertTokens(
+        @Header("Authorization") authHeader: String,
+        @Path("amount") amount :Int
+    )
+
+    @PUT("/tokens/retireTokens/{amount}")
+    suspend fun retireTokens(
+        @Header("Authorization") authHeader: String,
+        @Path("amount") amount :Int
+    )
 
     @GET("/tables/getAll")
     suspend fun getAllTables(@Header("Authorization") authToken: String): List<Table>

@@ -376,7 +376,7 @@ fun DrawCommCards(
     cardList: List<Card>,
     animationSpec: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing),
     fromBottom: Boolean = true,
-    visible: Boolean = true // controla si está visible o no
+    visible: Boolean = true
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val density = LocalDensity.current
@@ -430,7 +430,6 @@ fun DrawCard(card: Card,cardWith: Int,cardHeight: Int) {
             //.size(80.dp, 120.dp)
             .size(cardWith.dp, cardHeight.dp)
             .clip(RoundedCornerShape(8.dp))
-
             //.padding(4.dp)
     ) {
         Image(

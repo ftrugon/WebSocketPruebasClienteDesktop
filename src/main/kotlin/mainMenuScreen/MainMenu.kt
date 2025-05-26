@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import data.model.Usuario
 
+@Preview
 @Composable
 fun MainMenu() {
     var userInfo by remember { mutableStateOf<Usuario?>(null) }
@@ -100,13 +101,29 @@ fun MainMenu() {
                 }
             }
 
-            // User info
-            CardSection(title = "User Information") {
-                Text(
-                    text = "Username: ${userInfo?.username}\nID: ${userInfo?._id}",
-                    color = Color.White
-                )
+            Row(
+                //shape = RoundedCornerShape(16.dp),
+        //        elevation = CardDefaults.cardElevation(6.dp),
+        //        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3C)),
+                modifier = Modifier.fillMaxWidth().background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(text = "User Information", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        text = "Username: ${userInfo?.username}\nID: ${userInfo?._id}",
+                        color = Color.White
+                    )
+                }
+
+                ButtonCard(Modifier,text = "View profile: ${userInfo?.username}") {
+                    // TODO
+                }
+
             }
+
 
             // Bottom Buttons
             Row(
@@ -135,35 +152,12 @@ fun ActionButton(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun CardSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        //shape = RoundedCornerShape(16.dp),
-//        elevation = CardDefaults.cardElevation(6.dp),
-//        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3C)),
-        modifier = Modifier.fillMaxWidth().background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp))
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            content()
-        }
-    }
-}
-
-@Composable
 fun ButtonCard(modifier: Modifier,text: String, onClick: () -> Unit) {
     Column(
-        modifier = modifier.background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp)),
-        //shape = RoundedCornerShape(16.dp),
-        //elevation = CardDefaults.cardElevation(6.dp),
-        //colors = CardDefaults.cardColors(containerColor = Color(0xFF3B3B5B))
+        modifier = modifier.background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxHeight()
-                .clickable(onClick = onClick)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
