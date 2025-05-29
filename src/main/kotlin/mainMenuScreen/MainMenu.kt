@@ -1,24 +1,35 @@
 package mainMenuScreen
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.HorizontalScrollbar
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
-import androidx.compose.material.Card
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,11 +44,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
+import data.model.BetDocument
 import data.model.Usuario
+import findGameScreen.FindGameScreen
+import userProfileScreen.UserProfileScreen
 
-@Preview
+
 @Composable
 fun MainMenu() {
+    val navigator = LocalNavigator.currentOrThrow
     var userInfo by remember { mutableStateOf<Usuario?>(null) }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -63,49 +80,44 @@ fun MainMenu() {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
-            Column(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)),
-                //shape = RoundedCornerShape(16.dp),
-//                elevation = CardDefaults.cardElevation(8.dp),
-//                colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3C))
-            ) {
-                Row(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Gray.copy(alpha = 0.40f))
+                    .clip(RoundedCornerShape(16.dp)),
+
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            )
+            {
+
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .background(Color.Gray.copy(alpha = 0.40f)),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .clickable {
+                            navigator.push(UserProfileScreen())
+                        }
+                        .padding(horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color.Gray.copy(alpha = 0.4f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("👤", fontSize = 24.sp)
-                    }
-
-                    Text(
-                        text = "Tokens: ${userInfo?.tokens ?: 0}",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ActionButton("Add tokens") { /* TODO */ }
-                        ActionButton("Retire tokens") { /* TODO */ }
-                    }
+                    Text("👤", fontSize = 24.sp)
                 }
+
+                Text(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    text = "Tokens: ${userInfo?.tokens ?: 0}",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
 
             Row(
-                //shape = RoundedCornerShape(16.dp),
-        //        elevation = CardDefaults.cardElevation(6.dp),
-        //        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2A3C)),
-                modifier = Modifier.fillMaxWidth().background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp))
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.Gray.copy(alpha = 0.40f))
+                    .clip(RoundedCornerShape(16.dp))
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -118,9 +130,17 @@ fun MainMenu() {
                     )
                 }
 
-                ButtonCard(Modifier,text = "View profile: ${userInfo?.username}") {
-                    // TODO
+
+                ButtonAlgo(Modifier
+                    .padding(vertical = 8.dp)
+                    .height(48.dp)
+                    .fillMaxWidth()
+                    .align(Alignment.CenterVertically),
+                    "View profile: ${userInfo?.username ?: ""}",
+                    ){
+                    navigator.push(UserProfileScreen())
                 }
+
 
             }
 
@@ -130,38 +150,154 @@ fun MainMenu() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                ButtonCard(Modifier.weight(1f),text = "Search a table to join!") {
-                    // TODO
+
+                ButtonAlgo(
+                    modifier = Modifier.weight(1f),
+                    "View profile",
+                ){
+                    navigator.push(UserProfileScreen())
                 }
-                ButtonCard(Modifier.weight(1f),text = "View profile: ${userInfo?.username}") {
-                    // TODO
+
+                ButtonAlgo(
+                    modifier = Modifier.weight(1f),
+                    "Search a game to join",
+                ){
+                    navigator.push(FindGameScreen())
                 }
+
+            }
+
+
+            var isLoadingBets by remember { mutableStateOf(false) }
+            var listOfBets by remember { mutableStateOf(mapOf<String, List<BetDocument>>()) }
+
+            LaunchedEffect(Unit) {
+                isLoadingBets = true
+                listOfBets = ApiData.getMyBets().await().groupBy { it.tableId ?: "" }
+                isLoadingBets = false
+            }
+
+            if (isLoadingBets) {
+                CircularProgressIndicator()
+            } else {
+                DrawBets(listOfBets)
             }
         }
     }
 }
 
+
 @Composable
-fun ActionButton(text: String, onClick: () -> Unit) {
-    Button(
-        onClick = onClick,
-        //colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4E4E68))
+fun DrawBets(listOfBets: Map<String, List<BetDocument>>) {
+    val verticalScrollState = rememberLazyListState()
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Gray.copy(alpha = 0.40f))
+            .clip(RoundedCornerShape(16.dp))
+            .padding(16.dp)
     ) {
-        Text(text, color = Color.White)
+        LazyColumn(
+            state = verticalScrollState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.White.copy(alpha = 0.40f))
+                .padding(12.dp)
+        ) {
+            items(listOfBets.entries.toList()) { (tableId, bets) ->
+                val horizontalScrollState = rememberLazyListState()
+
+                Column(
+                    modifier = Modifier
+                        .padding(bottom = 24.dp)
+                ) {
+                    Text(
+                        text = "Table: ${bets.firstOrNull()?.tableName ?: ""}, id: $tableId",
+                        style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                    )
+
+                    Box {
+                        LazyRow(
+                            state = horizontalScrollState,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(bets) { bet ->
+                                itemBox(bet)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        HorizontalScrollbar(
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .fillMaxWidth(),
+                            adapter = rememberScrollbarAdapter(scrollState = horizontalScrollState)
+                        )
+                    }
+                }
+            }
+        }
+
+        VerticalScrollbar(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(scrollState = verticalScrollState)
+        )
     }
 }
 
 @Composable
-fun ButtonCard(modifier: Modifier,text: String, onClick: () -> Unit) {
-    Column(
-        modifier = modifier.background(Color.Gray.copy(alpha = 0.40f)).clip(RoundedCornerShape(16.dp)).clickable(onClick = onClick),
+fun itemBox(bet: BetDocument) {
+    Box(
+        modifier = Modifier
+            .width(180.dp)
+            .background(Color.White.copy(alpha = 0.40f))
+            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
+            .padding(12.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .padding(16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(text, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Color.White)
+        Column {
+            Text(
+                text = "Amount: ${bet.amount}",
+                style = MaterialTheme.typography.body2
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Type: ${bet.type}",
+                style = MaterialTheme.typography.body2,
+                color = Color.DarkGray
+            )
         }
+    }
+    Spacer(modifier = Modifier.height(4.dp))
+}
+
+@Composable
+fun ButtonAlgo(
+    modifier: Modifier,
+    text: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+){
+    OutlinedButton(
+        onClick = { onClick() },
+        colors = ButtonDefaults.outlinedButtonColors(
+            backgroundColor = Color.Gray.copy(alpha = 0.40f),
+            contentColor = Color.White
+        ),
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        enabled = enabled
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.body2.copy(
+                fontWeight = FontWeight.SemiBold
+            )
+        )
     }
 }

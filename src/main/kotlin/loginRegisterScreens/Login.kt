@@ -66,10 +66,10 @@ fun Login() {
                 if (success) {
                     navigator.push(MainMenuScreen())
                 } else {
-                    if (token.contains("401")){
-                        errorMessage = "Login incorrecto"
+                    errorMessage = if (token.contains("401")){
+                        "Incorrect credentials."
                     }else{
-                        errorMessage = "Error en la conexion"
+                        "Connection error!"
                     }
 
                     showError = true
@@ -94,5 +94,3 @@ fun Login() {
     }
 
 }
-
-

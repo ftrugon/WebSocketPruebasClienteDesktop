@@ -1,6 +1,8 @@
 import data.RetrofitServiceFactory
+import data.dto.InsertTableDTO
 import data.dto.RegistrarUsuarioDTO
 import data.dto.UsuarioLoginDTO
+import data.model.BetDocument
 import data.model.Table
 import data.model.Usuario
 import kotlinx.coroutines.CoroutineScope
@@ -64,13 +66,76 @@ object ApiData {
 
     fun getUserData(): Deferred<Usuario?>{
         return CoroutineScope(Dispatchers.IO).async {
-            println("intentado pillar user info")
-            userData = apiService.getUserInfo("Bearer $actualToken")
-
-            try {                println("$userData")
+            try {
+                userData = apiService.getUserInfo("Bearer $actualToken")
                 return@async userData
             }catch(e:Exception){
+                println("error en get user data")
                 return@async userData
+            }
+        }
+    }
+
+    fun insertTokens(amountToInsert: Int): Deferred<Usuario?>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                val userDto = apiService.insertTokens("Bearer $actualToken",amountToInsert)
+                userData?.tokens = userDto.tokens
+                return@async userData
+            }catch(e:Exception){
+                println("Error inesperado en insert tokens")
+                return@async userData
+            }
+        }
+    }
+
+
+    fun retireTokens(amountToRetire: Int): Deferred<Usuario?>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                val userDto = apiService.retireTokens("Bearer $actualToken",amountToRetire)
+                userData?.tokens = userDto.tokens
+                return@async userData
+            }catch(e:Exception){
+                println("Error inesperado en retire tokens")
+                return@async userData
+            }
+        }
+    }
+
+    fun changeUsername(newUsername: String): Deferred<Usuario?>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                val userDto = apiService.changeUsername("Bearer $actualToken",newUsername)
+                userData?.username = userDto.username
+                return@async userData
+            }catch(e:Exception){
+                println("Error inesperado en changeUsername")
+                return@async userData
+            }
+        }
+    }
+
+    fun insertTable(tableDTO: InsertTableDTO): Deferred<Table?>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+
+                return@async apiService.insertTable("Bearer $actualToken",tableDTO)
+            }catch(e:Exception){
+                println("Error inesperado insert table")
+                e.printStackTrace()
+                return@async null
+            }
+        }
+    }
+
+    fun getMyBets():Deferred<List<BetDocument>>{
+        return CoroutineScope(Dispatchers.IO).async {
+            try {
+                return@async apiService.getMybets("Bearer $actualToken")
+            }catch(e:Exception){
+                println("Error inesperado en getMyBets")
+                return@async listOf()
             }
         }
     }

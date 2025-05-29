@@ -1,4 +1,4 @@
-package gameScreen
+package gameScreen.wsComm
 
 import kotlinx.serialization.Serializable
 

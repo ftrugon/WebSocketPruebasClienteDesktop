@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import data.model.Table
 
@@ -41,13 +42,17 @@ fun TableCard(mesa: Table, onClickTable: () -> Unit) {
                 text = mesa.title,
                 style = MaterialTheme.typography.h3.copy(
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
+                    color = Color.Black,
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = mesa.desc,
-                style = MaterialTheme.typography.body1.copy(color = Color.DarkGray)
+                style = MaterialTheme.typography.body1.copy(color = Color.DarkGray),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(modifier = Modifier.height(10.dp))
             Row(
@@ -56,11 +61,11 @@ fun TableCard(mesa: Table, onClickTable: () -> Unit) {
             ) {
                 Text(
                     text = "Active players: ${mesa.numPlayers}/6",
-                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray)
+                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray),
                 )
                 Text(
                     text = "Big blind: ${mesa.bigBlind}",
-                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray)
+                    style = MaterialTheme.typography.body2.copy(color = Color.DarkGray),
                 )
             }
         }

@@ -34,6 +34,9 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import data.model.Table
+import gameScreen.GameScreen
+import gameScreen.wsComm.PlayerInfoMessage
+import mainMenuScreen.ButtonAlgo
 
 
 @Composable
@@ -44,6 +47,7 @@ fun TableList(mesas: List<Table>) {
     var showFiltered by remember { mutableStateOf(false) }
     var selectedTable:Table? by remember { mutableStateOf(null) }
 
+    var showCreateTableDialog by remember { mutableStateOf(false) }
     var stringFilter by remember { mutableStateOf("") }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -82,24 +86,6 @@ fun TableList(mesas: List<Table>) {
                 )
             }
 
-//            Box(modifier = Modifier.fillMaxWidth().weight(1f),
-//                contentAlignment = Alignment.Center) {
-//                Button(
-//                    onClick = { showFiltered = !showFiltered },
-//                    colors = ButtonDefaults.buttonColors(Color.Gray)
-//                ) {
-//                    Icon(
-//                        imageVector = Icons.Default.Search,
-//                        contentDescription = "Show only joinable tables",
-//                        tint = Color.White
-//                    )
-//                    Spacer(modifier = Modifier.width(6.dp))
-//                    Text(
-//                        if (showFiltered) "All tables" else "Only joinable tables",
-//                        color = Color.White
-//                    )
-//                }
-//            }
         }
 
         val filteredTables = if (showFiltered) {
@@ -132,14 +118,25 @@ fun TableList(mesas: List<Table>) {
         }
 
 
-        Button(modifier = Modifier.fillMaxWidth(), onClick = {
+        ButtonAlgo(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), "Create Table"){
+            showCreateTableDialog = true
+        }
 
-        }){
-            Text("Create Table")
+
+        if (showCreateTableDialog) {
+            CreateTableDialog({showCreateTableDialog = false}){
+                selectedTable = it
+            }
         }
 
         if (selectedTable != null) {
-            JoinTableDialog(selectedTable!!,navigator,{selectedTable = null})
+            JoinTableDialog(selectedTable!!,
+                {
+                    navigator.push(GameScreen(selectedTable?._id ?: "",
+                        it,
+                        selectedTable?.title ?: "")
+                    )
+                } ,{selectedTable = null})
         }
     }
 }

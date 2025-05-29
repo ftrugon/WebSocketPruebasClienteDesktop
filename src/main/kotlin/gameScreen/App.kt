@@ -6,7 +6,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -56,9 +55,17 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import gameScreen.wsComm.BetAction
+import gameScreen.wsComm.BetPayload
+import gameScreen.wsComm.Card
+import gameScreen.wsComm.CardSuit
+import gameScreen.wsComm.CardValue
+import gameScreen.wsComm.Message
+import gameScreen.wsComm.MessageType
+import gameScreen.wsComm.PlayerDataToShow
+import gameScreen.wsComm.PlayerInfoMessage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -71,7 +78,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 
-class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage,val tableTitle: String) : Screen {
+class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage, val tableTitle: String) : Screen {
     @Composable
     override fun Content() {
         App(idTable, playerInfo,tableTitle)
@@ -80,7 +87,7 @@ class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage,val tabl
 
 
 @Composable
-fun App(idTable: String, playerInfo: PlayerInfoMessage,tableTitle: String) {
+fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
     val navigator = LocalNavigator.currentOrThrow
 
@@ -413,7 +420,7 @@ fun DrawCommCards(
 
 
 @Composable
-fun DrawCard(card: Card,cardWith: Int,cardHeight: Int) {
+fun DrawCard(card: Card, cardWith: Int, cardHeight: Int) {
 
     var imageUrl:String = ""
 
