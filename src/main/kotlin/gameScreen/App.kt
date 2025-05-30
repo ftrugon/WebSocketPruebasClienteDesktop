@@ -77,150 +77,152 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
-
-class GameScreen(val idTable: String, val playerInfo: PlayerInfoMessage, val tableTitle: String) : Screen {
-    @Composable
-    override fun Content() {
-        App(idTable, playerInfo,tableTitle)
-    }
-}
-
-
 @Composable
 fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
     val navigator = LocalNavigator.currentOrThrow
-
     val listState = rememberLazyListState()
-    val messages = remember { mutableStateListOf<Message>() }
 
-    var isConnected by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()
-    var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
-    var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
-
-    var hasJoined by remember { mutableStateOf(false) }
-    var handRankingText by remember { mutableStateOf("") }
-    var showCards by remember { mutableStateOf(true) }
-    var hasStartedRound by remember { mutableStateOf(false) }
-    var isReadyToPlay by remember { mutableStateOf(false) }
-    var players by remember { mutableStateOf(listOf<PlayerDataToShow>()) }
-
-    // OkHttpClient + WebSocket state
-    val client = remember {
-        OkHttpClient.Builder()
-            .pingInterval(10, TimeUnit.SECONDS)
-            .build()
+    val viewModel = remember {
+        PokerViewModel(idTable, playerInfo) {
+            navigator.pop()
+        }
     }
-    var webSocket by remember { mutableStateOf<WebSocket?>(null) }
 
-    // Función para abrir WS, meter esto en el viewmodel
-    fun setupWebSocket() {
-        val request = Request.Builder()
-            .url("ws://localhost:8080/game/${idTable}")
-            .build()
-        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(ws: WebSocket, response: Response) {
-                scope.launch { isConnected = true }
-            }
-            override fun onMessage(ws: WebSocket, text: String) {
-                val payload = Json.decodeFromString<Message>(text)
-                scope.launch {
-
-                    if (payload.messageType == MessageType.PLAYER_READY){
-                        val (name, isReady) = Json.decodeFromString<Pair<String, Boolean>>(payload.content)
-
-                        if (name == playerInfo.name){
-                            isReadyToPlay = isReady
-                        }
-
-                    }
-                    if (payload.messageType == MessageType.STATE_UPDATE){
-                        commCards = Json.decodeFromString<MutableList<Card>>(payload.content)
-
-                        if (commCards.size == 3){
-                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
-                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
-                        }else if (commCards.size == 4){
-                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
-                        }
-
-                    }
-                    if (payload.messageType == MessageType.PLAYER_CARDS){
-                        userCards = Json.decodeFromString<MutableList<Card>>(payload.content)
-                    }
-                    if (payload.messageType == MessageType.NOTIFY_TURN) {
-                        val name = payload.content.split(":")[0]
-                        val tokens = payload.content.split(":")[1].toInt()
-
-                        println(payload.content)
-                        players.find { it.name == name }?.tokenAmount = tokens
-
-                        players = players.map {
-                            if (it.name == name) it.copy(tokenAmount = tokens) else it
-                        }
-                    }
-                    if (payload.messageType == MessageType.END_ROUND){
-                        showCards = false
-                        handRankingText = ""
-
-                        delay(800)
-
-                        isReadyToPlay = false
-                        commCards = mutableListOf<Card>()
-                        userCards = mutableListOf<Card>()
-                        hasStartedRound = false
-                    }
-                    if (payload.messageType == MessageType.HAND_RANKING){
-                        handRankingText = payload.content
-                    }
-                    if (payload.messageType == MessageType.START_ROUND){
-                        commCards = mutableListOf<Card>(
-                            Card(CardSuit.NONE, CardValue.NONE),
-                            Card(CardSuit.NONE, CardValue.NONE),
-                            Card(CardSuit.NONE, CardValue.NONE),
-                            Card(CardSuit.NONE, CardValue.NONE),
-                            Card(CardSuit.NONE, CardValue.NONE)
-                        )
-
-                        //players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
-
-                        showCards = true
-                        hasStartedRound = true
-                    }
-                    if (payload.messageType == MessageType.SEND_PLAYER_DATA){
-                        players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
-                    }
-                    messages.add(payload)
-
-                }
-            }
-            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
-                scope.launch {
-
-                    isConnected = false
-                    navigator.pop()
-
-                }
-            }
-            override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
-                scope.launch {
-                    isConnected = false
-                    navigator.pop()
-
-                }
-            }
-        })
-}
-
-
-    // meter esto en el viewmodel
-    if (!hasJoined){
-        setupWebSocket()
-        hasJoined = true
-        val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
-        webSocket?.send(Json.encodeToString(msg))
+    LaunchedEffect(Unit) {
+        viewModel.connect()
     }
+
+//
+//    val messages = remember { mutableStateListOf<Message>() }
+//
+//    var isConnected by remember { mutableStateOf(true) }
+//    val scope = rememberCoroutineScope()
+//    var commCards by remember { mutableStateOf(mutableListOf<Card>()) }
+//    var userCards by remember { mutableStateOf(mutableListOf<Card>()) }
+//
+//    var hasJoined by remember { mutableStateOf(false) }
+//    var handRankingText by remember { mutableStateOf("") }
+//    var showCards by remember { mutableStateOf(true) }
+//    var hasStartedRound by remember { mutableStateOf(false) }
+//    var isReadyToPlay by remember { mutableStateOf(false) }
+//    var players by remember { mutableStateOf(listOf<PlayerDataToShow>()) }
+//
+//    // OkHttpClient + WebSocket state
+//    val client = remember {
+//        OkHttpClient.Builder()
+//            .pingInterval(10, TimeUnit.SECONDS)
+//            .build()
+//    }
+//    var webSocket by remember { mutableStateOf<WebSocket?>(null) }
+//
+//    // Función para abrir WS, meter esto en el viewmodel
+//    fun setupWebSocket() {
+//        val request = Request.Builder()
+//            .url("ws://localhost:8080/game/${idTable}")
+//            .build()
+//        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+//            override fun onOpen(ws: WebSocket, response: Response) {
+//                scope.launch { isConnected = true }
+//            }
+//            override fun onMessage(ws: WebSocket, text: String) {
+//                val payload = Json.decodeFromString<Message>(text)
+//                scope.launch {
+//
+//                    if (payload.messageType == MessageType.PLAYER_READY){
+//                        val (name, isReady) = Json.decodeFromString<Pair<String, Boolean>>(payload.content)
+//
+//                        if (name == playerInfo.name){
+//                            isReadyToPlay = isReady
+//                        }
+//
+//                    }
+//                    if (payload.messageType == MessageType.STATE_UPDATE){
+//                        commCards = Json.decodeFromString<MutableList<Card>>(payload.content)
+//
+//                        if (commCards.size == 3){
+//                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+//                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+//                        }else if (commCards.size == 4){
+//                            commCards.add(Card(CardSuit.NONE, CardValue.NONE))
+//                        }
+//
+//                    }
+//                    if (payload.messageType == MessageType.PLAYER_CARDS){
+//                        userCards = Json.decodeFromString<MutableList<Card>>(payload.content)
+//                    }
+//                    if (payload.messageType == MessageType.NOTIFY_TURN) {
+//                        val name = payload.content.split(":")[0]
+//                        val tokens = payload.content.split(":")[1].toInt()
+//
+//                        println(payload.content)
+//                        players.find { it.name == name }?.tokenAmount = tokens
+//
+//                        players = players.map {
+//                            if (it.name == name) it.copy(tokenAmount = tokens) else it
+//                        }
+//                    }
+//                    if (payload.messageType == MessageType.END_ROUND){
+//                        showCards = false
+//                        handRankingText = ""
+//
+//                        delay(800)
+//
+//                        isReadyToPlay = false
+//                        commCards = mutableListOf<Card>()
+//                        userCards = mutableListOf<Card>()
+//                        hasStartedRound = false
+//                    }
+//                    if (payload.messageType == MessageType.HAND_RANKING){
+//                        handRankingText = payload.content
+//                    }
+//                    if (payload.messageType == MessageType.START_ROUND){
+//                        commCards = mutableListOf<Card>(
+//                            Card(CardSuit.NONE, CardValue.NONE),
+//                            Card(CardSuit.NONE, CardValue.NONE),
+//                            Card(CardSuit.NONE, CardValue.NONE),
+//                            Card(CardSuit.NONE, CardValue.NONE),
+//                            Card(CardSuit.NONE, CardValue.NONE)
+//                        )
+//
+//                        //players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
+//
+//                        showCards = true
+//                        hasStartedRound = true
+//                    }
+//                    if (payload.messageType == MessageType.SEND_PLAYER_DATA){
+//                        players = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
+//                    }
+//                    messages.add(payload)
+//
+//                }
+//            }
+//            override fun onClosed(ws: WebSocket, code: Int, reason: String) {
+//                scope.launch {
+//
+//                    isConnected = false
+//                    navigator.pop()
+//
+//                }
+//            }
+//            override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
+//                scope.launch {
+//                    isConnected = false
+//                    navigator.pop()
+//
+//                }
+//            }
+//        })
+//}
+//
+//
+//    // meter esto en el viewmodel
+//    if (!hasJoined){
+//        setupWebSocket()
+//        hasJoined = true
+//        val msg = Message(MessageType.PLAYER_INFO, Json.encodeToString(playerInfo))
+//        webSocket?.send(Json.encodeToString(msg))
+//    }
 
     Box{
 
@@ -249,25 +251,31 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
                 Text(
                     modifier = Modifier.align(Alignment.TopCenter),
-                    text = if (isConnected) "Connected to table: $tableTitle" else "Disconnected from table: $tableTitle",
-                    color = if (isConnected) Color(0xFF81C784) else Color(0xFFE57373),
+//                    text = if (isConnected) "Connected to table: $tableTitle" else "Disconnected from table: $tableTitle",
+//                    color = if (isConnected) Color(0xFF81C784) else Color(0xFFE57373),
+                    text = if (viewModel.isConnected) "Connected to table: $tableTitle" else "Disconnected from table: $tableTitle",
+                    color = if (viewModel.isConnected) Color(0xFF81C784) else Color(0xFFE57373),
                 )
 
                 Spacer(Modifier.height(8.dp))
 
-                if (hasStartedRound)
+//                if (hasStartedRound)
+                if (viewModel.hasStartedRound)
                 {
                     DrawCommCards(Modifier
-                        .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
+//                        .fillMaxWidth(),commCards, fromBottom = false, visible = showCards)
+                        .fillMaxWidth(),viewModel.commCards, fromBottom = false, visible = viewModel.showCards)
 
-                    DrawPlayersAroundCircle(playerInfo.name,userCards,players)
+//                    DrawPlayersAroundCircle(playerInfo.name,userCards,players)
+                    DrawPlayersAroundCircle(playerInfo.name,viewModel.userCards,viewModel.players)
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(8.dp)
                     )
                     {
-                        Text(handRankingText)
+//                        Text(handRankingText)
+                        Text(viewModel.handRankingText)
                         Row (
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.Center
@@ -276,29 +284,49 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
                             Button(
                                 onClick = {
-                                    val payload = BetPayload(BetAction.RAISE, 10)
-                                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                                    webSocket?.send(Json.encodeToString(msg)) }
+                                    viewModel.sendAction(BetAction.RAISE,10)
+//                                    val payload = BetPayload(BetAction.RAISE, 10)
+//                                    val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+//
+//                                    viewModel.sendMessage(msg)
+
+                                    //webSocket?.send(Json.encodeToString(msg))
+                                }
                                 ,
-                                enabled = isConnected,
+//                                enabled = isConnected,
+                                enabled = viewModel.isConnected,
                                 modifier = Modifier.padding(horizontal = 10.dp)) {
                                 Text("Raise 10")
                             }
 
                             Button(onClick = {
-                                val payload = BetPayload(BetAction.CALL, 0)
-                                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                                webSocket?.send(Json.encodeToString(msg))
-                            }, enabled = isConnected,
+                                viewModel.sendAction(BetAction.CALL)
+//
+//                                val payload = BetPayload(BetAction.CALL, 0)
+//                                val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
+//
+//                                viewModel.sendMessage(msg)
+
+//                                webSocket?.send(Json.encodeToString(msg))
+                            },
+//                                enabled = isConnected,
+                                enabled = viewModel.isConnected,
                                 modifier = Modifier.padding(horizontal = 10.dp)) {
                                 Text("Call / Check")
                             }
 
                             Button(onClick = {
+                                viewModel.sendAction(BetAction.FOLD)
+
                                 val payload = BetPayload(BetAction.FOLD, 0)
                                 val msg = Message(MessageType.ACTION, Json.encodeToString(payload))
-                                webSocket?.send(Json.encodeToString(msg))
-                            }, enabled = isConnected,
+
+                                viewModel.sendMessage(msg)
+
+//                                webSocket?.send(Json.encodeToString(msg))
+                            },
+//                                enabled = isConnected,
+                                enabled = viewModel.isConnected,
                                 modifier = Modifier.padding(horizontal = 10.dp)) {
                                 Text("Fold")
                             }
@@ -308,7 +336,8 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                 }else
                 {
 
-                    val buttonColors = if (isReadyToPlay) {
+//                    val buttonColors = if (isReadyToPlay) {
+                    val buttonColors = if (viewModel.isReadyToPlay) {
                         ButtonDefaults.buttonColors(
                             backgroundColor = Color(0xFF81C784),
                             contentColor = Color.White
@@ -321,10 +350,15 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                     }
                     Button(modifier = Modifier.align(Alignment.BottomCenter).padding(8.dp),
                         onClick = {
-                        val msg = Message(MessageType.PLAYER_READY, "true")
-                        webSocket?.send(Json.encodeToString(msg))
+
+                            viewModel.sendReady()
+//                            val msg = Message(MessageType.PLAYER_READY, "true")
+//
+//                            viewModel.sendMessage(msg)
+                        //webSocket?.send(Json.encodeToString(msg))
                     },
-                        enabled = isConnected,
+//                        enabled = isConnected,
+                        enabled = viewModel.isConnected,
                         colors = buttonColors) {
                         Text("Ready to play")
                     }
@@ -343,8 +377,8 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                 contentAlignment = Alignment.Center
             )
             {
-
-                SimpleChat(listState,messages,webSocket,isConnected,
+//                    SimpleChat(listState,messages,webSocket,isConnected,
+                SimpleChat(listState,viewModel.messages, { viewModel.sendMessage(it) },viewModel.isConnected,
                     modifier = Modifier
                         .fillMaxHeight()
                         .background(Color.White.copy(alpha = 0.40f))
@@ -356,7 +390,10 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
         // boton de salir abajo derecha
         Button(
-            onClick = { webSocket?.close(4001,"") },
+            onClick = {
+                viewModel.disconnect()
+            //webSocket?.close(4001,"")
+                      },
             colors = ButtonDefaults.buttonColors(
                 backgroundColor = Color(0xFFE57373),
                 contentColor = Color.White
@@ -375,192 +412,4 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
     }
 
 
-}
-
-@Composable
-fun DrawCommCards(
-    modifier: Modifier = Modifier,
-    cardList: List<Card>,
-    animationSpec: AnimationSpec<Float> = tween(durationMillis = 800, easing = FastOutSlowInEasing),
-    fromBottom: Boolean = true,
-    visible: Boolean = true
-) {
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val density = LocalDensity.current
-        val offsetY = remember { Animatable(0f) }
-
-        LaunchedEffect(cardList, visible) {
-            val offScreenOffset = with(density) {
-                if (fromBottom) maxHeight.toPx() else -maxHeight.toPx()
-            }
-
-            if (visible) {
-                // Aparece: animar desde fuera hacia 0
-                offsetY.snapTo(offScreenOffset)
-                offsetY.animateTo(0f, animationSpec)
-            } else {
-                // Desaparece: animar desde 0 hacia fuera
-                offsetY.snapTo(0f)
-                offsetY.animateTo(offScreenOffset, animationSpec)
-            }
-        }
-
-        Row(
-            modifier = Modifier
-                .offset { IntOffset(0, offsetY.value.roundToInt()) }
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            for (card in cardList) {
-                DrawCard(card,80,120)
-            }
-        }
-    }
-}
-
-
-@Composable
-fun DrawCard(card: Card, cardWith: Int, cardHeight: Int) {
-
-    var imageUrl:String = ""
-
-    if (card.suit != CardSuit.NONE) {
-        val cardSuitString = card.suit.toString().lowercase()
-        val cardValueWeight = if (card.value == CardValue.AS) 1 else card.value.weight.toString()
-        imageUrl = "/cardsImages/$cardSuitString/${cardSuitString}_$cardValueWeight.png"
-    }else{
-        imageUrl = "/cardsImages/card.png"
-    }
-
-    Box(
-        modifier = Modifier
-            //.size(80.dp, 120.dp)
-            .size(cardWith.dp, cardHeight.dp)
-            .clip(RoundedCornerShape(8.dp))
-            //.padding(4.dp)
-    ) {
-        Image(
-            painter = painterResource(imageUrl),
-            contentDescription = "",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-    Spacer(modifier = Modifier.width(8.dp))
-}
-
-
-@Composable
-fun SimpleChat(
-    listState: LazyListState,
-    messages: List<Message>,
-    webSocket: WebSocket?,
-    isConnected: Boolean,
-    modifier: Modifier = Modifier
-) {
-
-    // meter la parte de escribir en el viewmodel
-    var inputMessage by remember { mutableStateOf("") }
-
-    Column(modifier = modifier) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.weight(1f),
-            // reverseLayout = true
-        ) {
-            items(messages) {
-                when (it.messageType) {
-                    MessageType.TEXT_MESSAGE -> {
-                        ListItem(it)
-                    }
-                    MessageType.PLAYER_READY -> {
-                        val (name, isReady) = Json.decodeFromString<Pair<String, Boolean>>(it.content)
-                        Text("$name is ${if (isReady) "ready" else "not ready" } to play.")
-
-                    }
-                    MessageType.PLAYER_JOIN -> {
-                        Text("${it.content} has joined the table.")
-                    }
-                    MessageType.PLAYER_LEAVE -> {
-                        Text("${it.content} has leaved the table.")
-                    }
-                    MessageType.SERVER_RESPONSE -> {
-                        Text(it.content)
-                    }
-                    MessageType.NOTIFY_WINNER -> {
-                        Text(it.content)
-                    }
-                    MessageType.NOTIFY_TURN -> {
-                        val name = it.content.split(":").first()
-                        Text("Turn of $name")
-                    }
-                    else -> {
-
-                    }
-                }
-            }
-        }
-
-        LaunchedEffect(messages.size) {
-            val index = if (messages.isEmpty()) 0 else messages.size - 1
-            listState.scrollToItem(index)
-        }
-
-        TextField(
-            value = inputMessage,
-            onValueChange = { inputMessage = it },
-            label = { Text("Send message") },
-            singleLine = true,
-            trailingIcon = {
-                IconButton(onClick = {
-                val msg = Message(MessageType.TEXT_MESSAGE, inputMessage)
-                webSocket?.send(Json.encodeToString(msg))
-                inputMessage = ""
-            },enabled = isConnected) {
-                Icon(Icons.Default.Send, contentDescription = "")
-            }}
-        )
-
-    }
-}
-
-@Composable
-fun ListItem(msg: Message) {
-    Box(
-        modifier = Modifier
-            .padding(vertical = 6.dp, horizontal = 12.dp)
-            .fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .background(
-                    color = Color(0xFFDDEEFF),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(8.dp)  // padding interior uniforme
-                .fillMaxWidth()
-        ) {
-            Text(
-                text = msg.content,
-                color = Color.Black,
-                fontSize = 14.sp
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            val calendar = Calendar.getInstance()
-            val hour = calendar.get(Calendar.HOUR_OF_DAY)
-            val minute = calendar.get(Calendar.MINUTE)
-            val timestamp = String.format("%02d:%02d", hour, minute)
-
-            Text(
-                text = timestamp,
-                fontSize = 12.sp,
-                color = Color.DarkGray,
-                modifier = Modifier
-                    .align(Alignment.End)
-                    .padding(top = 4.dp)
-            )
-        }
-    }
 }
