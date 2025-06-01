@@ -49,7 +49,7 @@ class PokerViewModel(
     var showCards by mutableStateOf(true)
     var hasStartedRound by mutableStateOf(false)
     var isReadyToPlay by mutableStateOf(false)
-    var players by mutableStateOf(listOf<PlayerDataToShow>())
+    var players = mutableStateListOf<PlayerDataToShow>()
     var messages = mutableStateListOf<Message>()
 
     private var hasJoined = false
@@ -104,12 +104,13 @@ class PokerViewModel(
             }
 
             MessageType.NOTIFY_TURN -> {
-                val (name, tokens) = payload.content.split(":").let { it[0] to it[1].toInt() }
-                players = players.map {
-                    if (it.name == name) it.copy(tokenAmount = tokens) else it
-                }
+                val (name, tokens) = payload.content.split(":")
+                players.add(PlayerDataToShow(name,tokens.toInt()))
             }
-
+            MessageType.PLAYER_JOIN -> {
+                val playerDataToAdd = Json.decodeFromString<PlayerDataToShow>(payload.content)
+                players.add(playerDataToAdd)
+            }
             MessageType.END_ROUND -> {
                 showCards = false
                 handRankingText = ""

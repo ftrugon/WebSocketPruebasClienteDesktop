@@ -28,15 +28,13 @@ import gameScreen.wsComm.Card
 import gameScreen.wsComm.CardSuit
 import gameScreen.wsComm.CardValue
 import gameScreen.wsComm.PlayerDataToShow
+import kotlin.collections.forEach
 import kotlin.math.cos
 import kotlin.math.sin
 
 
-
 @Composable
-fun DrawPlayersAroundCircle(
-    playerName: String,
-    userCards: List<Card>,
+fun DrawPlayersWithoutCards(
     players: List<PlayerDataToShow>,
     radius: Dp = 350.dp
 ) {
@@ -52,6 +50,7 @@ fun DrawPlayersAroundCircle(
         val angleStep = 360f / players.size
 
         players.forEachIndexed { index, (player,tokensAmount) ->
+
             val angleRad = Math.toRadians((angleStep * index - 90).toDouble())
             val x = centerX + (radiusPx * cos(angleRad)).toInt()
             val y = (centerY + (radiusPx * sin(angleRad)).toInt() / 1.55).toInt()
@@ -59,69 +58,15 @@ fun DrawPlayersAroundCircle(
             Column(
                 modifier = Modifier
                     .offset {
-                        IntOffset(x - 86, y - 40)
+                        IntOffset(x - 40, y - 40)
                     }
                 ,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Círculo con nombre y tokens
+                // Círculo con nombre
                 DrawPlayerCircle(player,tokensAmount)
-
-                // Cartas solo si es el jugador actual
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // las cartas de cada jugador
-
-                Column(
-                    modifier = Modifier
-                        .width((userCards.size * 88).dp)
-                        .wrapContentHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    //contentAlignment = Alignment.Center
-                ) {
-                    Row {
-                        if (player == playerName) {
-                            userCards.forEach { card ->
-                                DrawCard(card,60,90)
-                            }
-                        }else {
-                            repeat(2) {
-                                DrawCard(Card(CardSuit.NONE, CardValue.NONE), 60, 90)
-                            }
-                        }
-                    }
-                }
-
             }
         }
     }
 }
 
-
-@Composable
-fun DrawPlayerCircle(player: String,tokensAmount: Int) {
-    // Círculo con nombre
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .background(Color.DarkGray, shape = CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            modifier = Modifier.align(Alignment.Center),
-            text = player,
-            color = Color.White,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            modifier = Modifier.align(Alignment.TopCenter),
-            text = tokensAmount.toString(),
-            color = Color.White,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}

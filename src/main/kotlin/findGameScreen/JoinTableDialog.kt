@@ -38,6 +38,9 @@ fun JoinTableDialog(
     onJoin:(PlayerInfoMessage) -> Unit,
     onDismiss: () -> Unit
 ) {
+
+    var tryJoin by remember { mutableStateOf(false) }
+
     Dialog(onDismissRequest = onDismiss) {
 
         Surface(
@@ -99,7 +102,16 @@ fun JoinTableDialog(
 
                         TextButton(
                             onClick = {
-                                onJoin(PlayerInfoMessage(ApiData.userData?.username?:"",dineroSeleccionado.toInt()))
+                                if (!tryJoin) {
+                                    tryJoin = true
+                                    onJoin(
+                                        PlayerInfoMessage(
+                                            ApiData.userData?.username ?: "",
+                                            dineroSeleccionado.toInt()
+                                        )
+                                    )
+
+                                }
                             },
                             enabled = canJoin,
                         ) {

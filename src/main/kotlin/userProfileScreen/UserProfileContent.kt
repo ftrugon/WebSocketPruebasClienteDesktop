@@ -78,7 +78,7 @@ fun UserProfileContent() {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ButtonAlgo(Modifier,"Retire tokens"){
+                ButtonAlgo(Modifier,"Insert tokens"){
                     dialogType = "insert"
                     inputText = ""
                     showDialog = true

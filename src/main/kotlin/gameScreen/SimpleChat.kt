@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import gameScreen.wsComm.Message
 import gameScreen.wsComm.MessageType
+import gameScreen.wsComm.PlayerDataToShow
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.WebSocket
@@ -58,7 +59,8 @@ fun SimpleChat(
 
                     }
                     MessageType.PLAYER_JOIN -> {
-                        Text("${it.content} has joined the table.")
+                        val player = Json.decodeFromString<PlayerDataToShow>(it.content)
+                        Text("${player.name} has joined the table.")
                     }
                     MessageType.PLAYER_LEAVE -> {
                         Text("${it.content} has leaved the table.")

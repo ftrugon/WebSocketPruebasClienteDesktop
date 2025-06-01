@@ -15,20 +15,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
@@ -39,6 +46,7 @@ import gameScreen.wsComm.MessageType
 import gameScreen.wsComm.PlayerInfoMessage
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import mainMenuScreen.ButtonAlgo
 
 @Composable
 fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
@@ -99,43 +107,92 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                             .padding(8.dp)
                     )
                     {
-                        Text(viewModel.handRankingText)
-                        Row (
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center
-                        )
-                        {
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = viewModel.handRankingText.replace("_"," "),
+                            color = Color.White,)
 
-                            Button(
-                                onClick = {
-                                    viewModel.sendAction(BetAction.RAISE,10)
+                        var wantToRaise by remember { mutableStateOf(false) }
+                        var amountToRaise by remember { mutableStateOf("") }
 
-                                },
-                                enabled = viewModel.isConnected,
-                                modifier = Modifier.padding(horizontal = 10.dp)) {
-                                Text("Raise 10")
+                        if (!wantToRaise) {
+                            Row (
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            )
+                            {
+
+                                ButtonAlgo(
+                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                    text = "Raise",
+                                    onClick = {
+                                        wantToRaise = true
+                                    },
+                                )
+
+                                ButtonAlgo(
+                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                    text = "Call / Check",
+                                    onClick = {
+                                        viewModel.sendAction(BetAction.CALL)
+                                    },
+                                )
+
+                                ButtonAlgo(
+                                    modifier = Modifier.padding(horizontal = 10.dp),
+                                    text = "Fold",
+                                    onClick = {
+                                        viewModel.sendAction(BetAction.FOLD)
+                                    },
+                                )
+
+                            }
+                        }else {
+
+
+                            Row (
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ){
+
+                                OutlinedTextField(
+                                    value = amountToRaise,
+                                    onValueChange = {
+                                        amountToRaise = amountToRaise.filter { tal -> tal.isDigit() }
+                                    },
+                                    label = { Text("Amount to raise") },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+
+                                ButtonAlgo(
+                                    modifier = Modifier,
+                                    text = "Raise!",
+                                    onClick = {
+                                        if (amountToRaise.toInt() > 0) {
+                                            viewModel.sendAction(BetAction.RAISE, amountToRaise.toInt())
+                                        }
+                                    },
+                                )
+
+                                ButtonAlgo(
+                                    modifier = Modifier,
+                                    text = "Cancel",
+                                    onClick = {
+                                        wantToRaise = false
+                                    },
+                                )
+
+
                             }
 
-                            Button(onClick = {
-                                viewModel.sendAction(BetAction.CALL)
-                            },
-                                enabled = viewModel.isConnected,
-                                modifier = Modifier.padding(horizontal = 10.dp)) {
-                                Text("Call / Check")
-                            }
-
-                            Button(onClick = {
-                                viewModel.sendAction(BetAction.FOLD)
-                            },
-                                enabled = viewModel.isConnected,
-                                modifier = Modifier.padding(horizontal = 10.dp)) {
-                                Text("Fold")
-                            }
                         }
+
                     }
 
                 }else
                 {
+
+                    DrawPlayersWithoutCards(viewModel.players)
 
                     val buttonColors = if (viewModel.isReadyToPlay) {
                         ButtonDefaults.buttonColors(
@@ -193,26 +250,3 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
 }
 
-@Composable
-fun ExitButton(
-    modifier: Modifier,
-    onClick: () -> Unit,
-){
-    Button(
-        onClick = {
-            onClick()
-            //webSocket?.close(4001,"")
-        },
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = Color(0xFFE57373),
-            contentColor = Color.White
-        ),
-        modifier = modifier
-    ) {
-        Icon(
-            imageVector = Icons.Default.ExitToApp,
-            contentDescription = "Salir",
-            modifier = Modifier.size(20.dp)
-        )
-    }
-}
