@@ -3,6 +3,7 @@ package data
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
+
 object RetrofitServiceFactory {
 
     private const val staticUrl = "http://localhost:8080"

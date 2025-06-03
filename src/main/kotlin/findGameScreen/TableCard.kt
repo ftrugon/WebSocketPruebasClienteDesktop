@@ -22,6 +22,11 @@ import androidx.compose.ui.unit.dp
 import data.model.Table
 
 
+/**
+ * funcion para dibujar cada mesa en el menu de seleccion
+ * @param mesa la mesa que se ddibuja
+ * @param onClickTable funcoi n que pasa al cliclar la mesa
+ */
 @Composable
 fun TableCard(mesa: Table, onClickTable: () -> Unit) {
     Box(

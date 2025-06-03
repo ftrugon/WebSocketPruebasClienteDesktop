@@ -9,6 +9,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import data.model.Table
 
+/**
+ * funciom que contiene las partes para la screen de buscar una mesa
+ */
 @Preview()
 @Composable
 fun FindGame(){

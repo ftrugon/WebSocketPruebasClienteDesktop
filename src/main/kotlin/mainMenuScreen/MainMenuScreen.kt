@@ -38,6 +38,9 @@ import data.model.Usuario
 import findGameScreen.FindGameScreen
 import userProfileScreen.UserProfileScreen
 
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ */
 class MainMenuScreen : Screen {
     @Composable
     override fun Content() {

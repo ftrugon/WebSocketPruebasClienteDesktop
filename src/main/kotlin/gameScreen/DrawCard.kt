@@ -17,7 +17,12 @@ import gameScreen.wsComm.Card
 import gameScreen.wsComm.CardSuit
 import gameScreen.wsComm.CardValue
 
-
+/**
+ * funcion para dibujar una carta, elige su imagen
+ * @param card la carta que se va a dibujaar
+ * @param cardWith la anchura adde la carta
+ * @param cardHeight la altura de la carta
+ */
 @Composable
 fun DrawCard(card: Card, cardWith: Int, cardHeight: Int) {
 

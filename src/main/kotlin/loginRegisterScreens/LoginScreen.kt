@@ -56,6 +56,10 @@ import cafe.adriel.voyager.transitions.SlideTransition
 import kotlinx.coroutines.launch
 import welcomeScreen.WelcomeScreen
 
+
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ */
 class LoginScreen : Screen {
 
     // val loginViewModel = sera el viewmodel del login

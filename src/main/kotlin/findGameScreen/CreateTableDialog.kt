@@ -38,7 +38,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mainMenuScreen.ButtonAlgo
 
-
+/**
+ * funcion para mostrar el dialogo para crear una mesa
+ */
 @Composable
 fun CreateTableDialog(
     onDismissRequest: () -> Unit,
@@ -67,13 +69,13 @@ fun CreateTableDialog(
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Título") }
+                    label = { Text("Title") }
                 )
 
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Descripción") }
+                    label = { Text("Description") }
                 )
 
                 OutlinedTextField(
@@ -89,7 +91,7 @@ fun CreateTableDialog(
 
                 Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = onDismissRequest) {
-                        Text("Cancelar")
+                        Text("Cancel")
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -118,7 +120,7 @@ fun CreateTableDialog(
                                 if (success != null) {
                                     onTableCreated(success)
                                 }else {
-                                    errorText = "Error al obtener los datos"
+                                    errorText = "Error creating table"
                                 }
                             }
                         }

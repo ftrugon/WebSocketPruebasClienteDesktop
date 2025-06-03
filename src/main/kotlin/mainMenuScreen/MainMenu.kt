@@ -1,10 +1,8 @@
 package mainMenuScreen
 
-import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -25,11 +22,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,7 +45,9 @@ import data.model.Usuario
 import findGameScreen.FindGameScreen
 import userProfileScreen.UserProfileScreen
 
-
+/**
+ * funcion con el contenido del main menu
+ */
 @Composable
 fun MainMenu() {
     val navigator = LocalNavigator.currentOrThrow
@@ -186,118 +182,3 @@ fun MainMenu() {
     }
 }
 
-
-@Composable
-fun DrawBets(listOfBets: Map<String, List<BetDocument>>) {
-    val verticalScrollState = rememberLazyListState()
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Gray.copy(alpha = 0.40f))
-            .clip(RoundedCornerShape(16.dp))
-            .padding(16.dp)
-    ) {
-        LazyColumn(
-            state = verticalScrollState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color.White.copy(alpha = 0.40f))
-                .padding(12.dp)
-        ) {
-            items(listOfBets.entries.toList()) { (tableId, bets) ->
-                val horizontalScrollState = rememberLazyListState()
-
-                Column(
-                    modifier = Modifier
-                        .padding(bottom = 24.dp)
-                ) {
-                    Text(
-                        text = "Table: ${bets.firstOrNull()?.tableName ?: ""}, id: $tableId",
-                        style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
-                        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
-                    )
-
-                    Box {
-                        LazyRow(
-                            state = horizontalScrollState,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            items(bets) { bet ->
-                                itemBox(bet)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        HorizontalScrollbar(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .fillMaxWidth(),
-                            adapter = rememberScrollbarAdapter(scrollState = horizontalScrollState)
-                        )
-                    }
-                }
-            }
-        }
-
-        VerticalScrollbar(
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .fillMaxHeight(),
-            adapter = rememberScrollbarAdapter(scrollState = verticalScrollState)
-        )
-    }
-}
-
-@Composable
-fun itemBox(bet: BetDocument) {
-    Box(
-        modifier = Modifier
-            .width(180.dp)
-            .background(Color.White.copy(alpha = 0.40f))
-            .border(1.dp, Color.LightGray, RoundedCornerShape(12.dp))
-            .padding(12.dp)
-    ) {
-        Column {
-            Text(
-                text = "Amount: ${bet.amount}",
-                style = MaterialTheme.typography.body2
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Type: ${bet.type}",
-                style = MaterialTheme.typography.body2,
-                color = Color.DarkGray
-            )
-        }
-    }
-    Spacer(modifier = Modifier.height(4.dp))
-}
-
-@Composable
-fun ButtonAlgo(
-    modifier: Modifier,
-    text: String,
-    enabled: Boolean = true,
-    onClick: () -> Unit,
-){
-    OutlinedButton(
-        onClick = { onClick() },
-        colors = ButtonDefaults.outlinedButtonColors(
-            backgroundColor = Color.Gray.copy(alpha = 0.40f),
-            contentColor = Color.White
-        ),
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
-        enabled = enabled
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.body2.copy(
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-    }
-}

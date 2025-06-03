@@ -13,17 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Icon
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +44,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import mainMenuScreen.ButtonAlgo
 
+
+/**
+ * funcion que contiene todas las cosas de la partida
+ * @param idTable la id de la mesa a la que teunes
+ * @param playerInfo la informacion del jugador que se uyne a la mesa
+ * @param tableTitle el titulo de la mesa
+ */
 @Composable
 fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
 
@@ -107,10 +110,18 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                             .padding(8.dp)
                     )
                     {
+
+                        Text(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            text = "Actual bet round: " + viewModel.actualDeskAmount + " tokens",
+                            color = Color.White,)
+
                         Text(
                             modifier = Modifier.align(Alignment.CenterHorizontally),
                             text = viewModel.handRankingText.replace("_"," "),
                             color = Color.White,)
+
+
 
                         var wantToRaise by remember { mutableStateOf(false) }
                         var amountToRaise by remember { mutableStateOf("") }
@@ -149,7 +160,6 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                             }
                         }else {
 
-
                             Row (
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.Center
@@ -158,39 +168,42 @@ fun App(idTable: String, playerInfo: PlayerInfoMessage, tableTitle: String) {
                                 OutlinedTextField(
                                     value = amountToRaise,
                                     onValueChange = {
-                                        amountToRaise = amountToRaise.filter { tal -> tal.isDigit() }
+                                        amountToRaise = it.filter { letra -> letra.isDigit() }
                                     },
                                     label = { Text("Amount to raise") },
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    colors = TextFieldDefaults.outlinedTextFieldColors(
+                                        textColor = Color.Gray,
+                                        focusedLabelColor = Color.Gray,
+                                        unfocusedLabelColor = Color.Gray,
+                                        cursorColor = Color.Gray
+                                    )
                                 )
 
-                                ButtonAlgo(
-                                    modifier = Modifier,
-                                    text = "Raise!",
-                                    onClick = {
-                                        if (amountToRaise.toInt() > 0) {
-                                            viewModel.sendAction(BetAction.RAISE, amountToRaise.toInt())
-                                        }
-                                    },
-                                )
+                                Column {
+                                    ButtonAlgo(
+                                        modifier = Modifier,
+                                        text = "Raise!",
+                                        onClick = {
+                                            if (amountToRaise.toInt() > 0 && amountToRaise.isNotEmpty()) {
+                                                viewModel.sendAction(BetAction.RAISE, amountToRaise.toInt())
+                                            }
+                                        },
+                                        enabled = amountToRaise.isNotEmpty(),
+                                    )
 
-                                ButtonAlgo(
-                                    modifier = Modifier,
-                                    text = "Cancel",
-                                    onClick = {
-                                        wantToRaise = false
-                                    },
-                                )
-
-
+                                    ButtonAlgo(
+                                        modifier = Modifier,
+                                        text = "Cancel",
+                                        onClick = {
+                                            wantToRaise = false
+                                        },
+                                    )
+                                }
                             }
-
                         }
-
                     }
-
-                }else
-                {
+                }else {
 
                     DrawPlayersWithoutCards(viewModel.players)
 

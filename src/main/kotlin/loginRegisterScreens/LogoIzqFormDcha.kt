@@ -21,7 +21,11 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 
-
+/**
+ * funcion que tiene el logo a la izquierda y el registro o login a la derecha, tambien teien eun fondo
+ * @param imgFondo la imagen de fondo que tendra la pantalla
+ * @param content el contenido de el formulario de la derecha
+ */
 @Composable
 fun LogoIzqFormDcha(
     imgFondo: String,

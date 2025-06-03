@@ -8,6 +8,16 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 
 
+/**
+ * TODO -> cambiar esto, no cumple el srp
+ * funcion que sirve para enseñar un dialogo de la api
+ * @param onDismiss funcion typo que se ejecuta cuando cierras el dialog
+ * @param dialogType el tipo de dialog
+ * @param inputText el texto que tiene de contenido, porque solo hay 1 texto en este dialog
+ * @param onInputValueChange funcion typo cuando escribes
+ * @param onConfirm funcion que se ejecura al confirmar la operacion
+ * @param onCancel lo que se ejecuta cuando cancelas la operacion
+ */
 @Composable
 fun DialogOfRetireInsertAndChangeUsername(
     onDismiss: () -> Unit,

@@ -33,6 +33,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 
+/**
+ * funcion para ddibujar los jugadores como su fiera uin circulo pero sin las cartas
+ */
 @Composable
 fun DrawPlayersWithoutCards(
     players: List<PlayerDataToShow>,

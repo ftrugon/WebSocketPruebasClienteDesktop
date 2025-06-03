@@ -32,7 +32,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 
-
+/**
+ * funcion para ddibujar los jugadores como su fiera uin circulo con las cartas abajo
+ */
 @Composable
 fun DrawPlayersAroundCircle(
     playerName: String,
@@ -98,30 +100,3 @@ fun DrawPlayersAroundCircle(
 }
 
 
-@Composable
-fun DrawPlayerCircle(player: String,tokensAmount: Int) {
-    // Círculo con nombre
-    Box(
-        modifier = Modifier
-            .size(80.dp)
-            .background(Color.DarkGray, shape = CircleShape),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            modifier = Modifier.align(Alignment.Center),
-            text = player,
-            color = Color.White,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            modifier = Modifier.align(Alignment.TopCenter),
-            text = tokensAmount.toString(),
-            color = Color.White,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}

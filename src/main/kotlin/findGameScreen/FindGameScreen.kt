@@ -43,6 +43,9 @@ import data.model.Table
 import mainMenuScreen.ActualScreen
 import mainMenuScreen.ColumnaIzquierda
 
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ */
 class FindGameScreen: Screen {
 
     @Composable

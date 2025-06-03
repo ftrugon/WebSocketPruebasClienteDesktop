@@ -31,7 +31,9 @@ import kotlinx.coroutines.launch
 import loginRegisterScreens.LoginScreen
 import mainMenuScreen.ButtonAlgo
 
-
+/**
+ * contenido de la pantalla dde usuario
+ */
 @Composable
 fun UserProfileContent() {
     val usuario = ApiData.userData
@@ -112,7 +114,16 @@ fun UserProfileContent() {
                 onDismiss = {showDialog = false},
                 dialogType =  dialogType,
                 inputText = inputText,
-                onInputValueChange = {inputText = it},
+                onInputValueChange = {
+
+                    inputText = if (dialogType == "insert" || dialogType == "retire") {
+                        it.filter { letra -> letra.isDigit() }
+                    }else{
+                        it
+                    }
+
+
+                                     },
                 onConfirm = {
                     showDialog = false
                     scope.launch {

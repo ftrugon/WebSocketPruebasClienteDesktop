@@ -30,7 +30,12 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import loginRegisterScreens.LoginScreen
 
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ * es la que contiene la screen de welcome
+ */
 class WelcomeScreen : Screen {
+
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
@@ -89,4 +94,5 @@ class WelcomeScreen : Screen {
             }
         }
     }
+
 }

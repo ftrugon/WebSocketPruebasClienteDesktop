@@ -18,7 +18,11 @@ import androidx.compose.ui.unit.sp
 import gameScreen.wsComm.Message
 import java.util.Calendar
 
-
+/**
+ * funcion pra mopstrar los mensajues que han enviado los usuarios por el chat
+ * @param msg el mensaje enviado
+ *
+ */
 @Composable
 fun ListItem(msg: Message) {
     Box(

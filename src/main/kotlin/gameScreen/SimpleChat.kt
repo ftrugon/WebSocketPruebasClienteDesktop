@@ -28,7 +28,14 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.WebSocket
 
-
+/**
+ * funcion para ddiibujar el chat de la derecha en meddio dde la partida
+ * @param listState el state de la lista, para que scrolleee automaticamente hacia abajo
+ * @param messages la lista de mensajes que tiene que escribir
+ * @param onSendMessage mandar el mensaje
+ * @param isConnected si esta o no conectado
+ * @param modifier el modifier de la columna que contiene esto
+ */
 @Composable
 fun SimpleChat(
     listState: LazyListState,

@@ -19,6 +19,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 
 
+/**
+ * campo que sirve para el campo de contraseña o usuario en el login y el regisdtro
+ * @param label la etiqueta del texto
+ * @param campo el camop que se esta mostranado
+ * @param onChangeCampo la funcoin quye se realiza al cambiar el campo
+ * @param esContrasena indica si es contraseña para poner el icono y el cifrado
+ */
 @Composable
 fun CampoAlgo(
     label: String,

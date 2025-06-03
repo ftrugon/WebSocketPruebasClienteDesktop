@@ -30,7 +30,12 @@ import data.model.Table
 import gameScreen.GameScreen
 import gameScreen.wsComm.PlayerInfoMessage
 
-
+/**
+ * dialog para unirte a una partida
+ * @param mesa la mesa a la que te vas a unir
+ * @param onJoin funcionq ue ocurre aal boton de join
+ * @param onDismiss funcion que ocurre cuando  cancelas el dialog
+ */
 @Composable
 fun JoinTableDialog(
     mesa: Table,

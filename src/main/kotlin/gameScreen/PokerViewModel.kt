@@ -32,34 +32,49 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import java.util.concurrent.TimeUnit
 
+
+/**
+ * clase para el viewmodel de la paartida del pokler
+ * @property idTable la id de la tabla a la que se une el cliente
+ * @property playerInfo la informacion del jugador que se une
+ * @property onDisconnected la funcion que se produce cuando se desconecta el usuario
+ */
 class PokerViewModel(
     private val idTable: String,
     private val playerInfo: PlayerInfoMessage,
     private val onDisconnected: () -> Unit
 ) {
+
+    // url con la que te coneectas
+    private val url = "ws://localhost:8080/game/"
+
+    // el cliente que hace la conexion con el ws
     private val client = OkHttpClient.Builder()
         .pingInterval(10, TimeUnit.SECONDS)
         .build()
 
-    var webSocket: WebSocket? = null
-    var isConnected by mutableStateOf(false)
-    var commCards by mutableStateOf(mutableListOf<Card>())
-    var userCards by mutableStateOf(mutableListOf<Card>())
-    var handRankingText by mutableStateOf("")
-    var showCards by mutableStateOf(true)
-    var hasStartedRound by mutableStateOf(false)
-    var isReadyToPlay by mutableStateOf(false)
-    var players = mutableStateListOf<PlayerDataToShow>()
-    var messages = mutableStateListOf<Message>()
+    var webSocket: WebSocket? = null // el websocket que hace la conexion
+    var isConnected by mutableStateOf(false) // si esta conectado para manejar algunas cosas en la interfaz
+    var commCards by mutableStateOf(mutableListOf<Card>()) // cartas comunitarias que se ddibujan
+    var userCards by mutableStateOf(mutableListOf<Card>()) // las cartas del usuario
+    var handRankingText by mutableStateOf("") // el texto del ranking
+    var actualDeskAmount by mutableStateOf("") // texto dde la cantidadd actual de dinero en la mesa
+    var showCards by mutableStateOf(true) // mostrar las cartas o no
+    var hasStartedRound by mutableStateOf(false) // ha empezado la  ronda o no
+    var isReadyToPlay by mutableStateOf(false) // el jugadore esta listo para jugar
+    var players by mutableStateOf(mutableListOf<PlayerDataToShow>()) // jfguaadores en la mesa
+    var messages by mutableStateOf(mutableListOf<Message>()) // mensages enviados
+    private var hasJoined = false // se ha uniddo o no
 
-    private var hasJoined = false
-
+    /**
+     * funcion para conectar el websocket
+     */
     fun connect() {
         if (hasJoined) return
         hasJoined = true
 
         val request = Request.Builder()
-            .url("ws://localhost:8080/game/$idTable")
+            .url("$url$idTable")
             .build()
 
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
@@ -85,6 +100,10 @@ class PokerViewModel(
         })
     }
 
+    /**
+     * funcion para recibir un mensaje y saaber que hacer con el
+     * @param payload el mensaje que se ha enviado
+     */
     private fun handleMessage(payload: Message) {
         when (payload.messageType) {
             MessageType.PLAYER_READY -> {
@@ -105,15 +124,27 @@ class PokerViewModel(
 
             MessageType.NOTIFY_TURN -> {
                 val (name, tokens) = payload.content.split(":")
-                players.add(PlayerDataToShow(name,tokens.toInt()))
+
+                val updatedPlayers = players.map {
+                    if (it.name == name) it.copy(tokenAmount = tokens.toInt())
+                    else it
+                }
+                players = updatedPlayers.toMutableList()
+
             }
-            MessageType.PLAYER_JOIN -> {
-                val playerDataToAdd = Json.decodeFromString<PlayerDataToShow>(payload.content)
-                players.add(playerDataToAdd)
+            MessageType.SEND_PLAYER_DATA ->{
+                val newListOfPlayers = Json.decodeFromString<List<PlayerDataToShow>>(payload.content)
+                players = newListOfPlayers.toMutableList()
             }
+            MessageType.SEND_ACTUAL_TABLE_AMOUNT ->{
+                actualDeskAmount = payload.content
+            }
+
             MessageType.END_ROUND -> {
+                hasStartedRound = false
                 showCards = false
                 handRankingText = ""
+                actualDeskAmount = ""
 
                 CoroutineScope(Dispatchers.IO).launch {
 
@@ -134,29 +165,41 @@ class PokerViewModel(
                 hasStartedRound = true
             }
 
-            MessageType.SEND_PLAYER_DATA -> {
-                players = Json.decodeFromString(payload.content)
-            }
-
             else -> {}
         }
 
-        messages.add(payload)
+        val newListOfMsgs = messages + payload
+        messages = newListOfMsgs.toMutableList()
     }
 
+    /**
+     * funcion para enviar que el cliente esta listo
+     */
     fun sendReady() {
         sendMessage(Message(MessageType.PLAYER_READY, "true"))
     }
 
+    /**
+     * funcion para enviar una accion
+     * @param action la accion que se va a realizar
+     * @param amount la cantidad que se va a realizar la accion, por defecto esta en 0 porque no siempre vas a hacer raise
+     */
     fun sendAction(action: BetAction, amount: Int = 0) {
         val payload = BetPayload(action, amount)
         sendMessage(Message(MessageType.ACTION, Json.encodeToString(payload)))
     }
 
+    /**
+     * fincion para enviar un mensaje al servidor
+     * @param message el mensaje que se quiere enviar
+     */
     fun sendMessage(message: Message) {
         webSocket?.send(Json.encodeToString(message))
     }
 
+    /**
+     * funcion para ddesconectarte del la mesa
+     */
     fun disconnect() {
         webSocket?.close(4001, "")
     }

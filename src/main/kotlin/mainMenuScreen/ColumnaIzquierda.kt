@@ -27,7 +27,12 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import findGameScreen.FindGameScreen
 import userProfileScreen.UserProfileScreen
 
-
+/**
+ * funcion para dibujar la columna izquierda de el menu
+ * @param imgFondo la imange de fondo que va a tener el contenido
+ * @param actualScreen la screen actual para que no se buguee si le das a un boton
+ * @param content el contenido que va a tener a la derecha
+ */
 @Composable
 fun ColumnaIzquierda(
     imgFondo: String,

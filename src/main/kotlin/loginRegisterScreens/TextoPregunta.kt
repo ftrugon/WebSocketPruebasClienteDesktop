@@ -13,6 +13,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 
+/**
+ * texto de abajo de los de inicio de sesion y registro
+ * @param textoUno el texto que hace como pregunta
+ * @param textoDos el texto que se puede clicar
+ * @param onClick la funcion que se hace al darke al texto clicable
+ */
 @Composable
 fun TextoPregunta(
     textoUno: String,

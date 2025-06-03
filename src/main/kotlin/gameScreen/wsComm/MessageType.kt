@@ -1,6 +1,9 @@
 package gameScreen.wsComm
 
 
+/**
+ * enum class para el tipo de mensajes que puedem llegaar o ser enviados
+ */
 enum class MessageType {
     PLAYER_READY,
     PLAYER_JOIN,
@@ -16,5 +19,6 @@ enum class MessageType {
     NOTIFY_TURN,
     HAND_RANKING,
     NOTIFY_WINNER,
-    SEND_PLAYER_DATA
+    SEND_PLAYER_DATA,
+    SEND_ACTUAL_TABLE_AMOUNT
 }

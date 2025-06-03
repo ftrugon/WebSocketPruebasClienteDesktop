@@ -54,6 +54,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import data.dto.RegistrarUsuarioDTO
 import kotlinx.coroutines.launch
 
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ */
 class RegisterScreen : Screen {
     @Composable
     override fun Content() {

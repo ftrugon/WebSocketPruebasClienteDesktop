@@ -11,6 +11,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 
 
+/**
+ * objeto para recibir y usar la informacion que necesito de la api
+ */
 object ApiData {
 
     var actualToken:String = ""

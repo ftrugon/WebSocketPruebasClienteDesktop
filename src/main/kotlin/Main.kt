@@ -15,6 +15,9 @@ import cafe.adriel.voyager.transitions.SlideTransition
 import gameScreen.App
 import welcomeScreen.WelcomeScreen
 
+/**
+ * funcion principal del programa, contiene el application y ddentro el composable con la app
+ */
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,

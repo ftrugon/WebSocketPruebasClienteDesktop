@@ -38,7 +38,10 @@ import gameScreen.GameScreen
 import gameScreen.wsComm.PlayerInfoMessage
 import mainMenuScreen.ButtonAlgo
 
-
+/**
+ * funcion para dibujar todas las mesas de la db
+ * @param mesas las mesas a dibujaar
+ */
 @Composable
 fun TableList(mesas: List<Table>) {
 

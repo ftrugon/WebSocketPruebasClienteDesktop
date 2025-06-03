@@ -22,6 +22,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import data.dto.RegistrarUsuarioDTO
 import kotlinx.coroutines.launch
 
+/**
+ * funcion con el conteniuddo del registro
+ */
 @Composable
 fun Register() {
 

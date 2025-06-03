@@ -11,6 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+
+/**
+ * boton para salir de la mesa abajo a la derecha dde la screen
+ * @param modifier el moficador del boton
+ * @param onClick la funcion que se realiza al clicar el boton
+ */
 @Composable
 fun ExitButton(
     modifier: Modifier,

@@ -18,7 +18,14 @@ import androidx.compose.ui.unit.IntOffset
 import gameScreen.wsComm.Card
 import kotlin.math.roundToInt
 
-
+/**
+ * funcion para dibujar las cartas comunitariasa
+ * @param modifier el modificador de el boxwithconstraint
+ * @param cardList la lista de cartas a dibujar
+ * @param animationSpec el tipo de animacion que  quieres que tengan las cartas al salir
+ * @param fromBottom si las cartas salen por debajo o por arriba (eestaba usanddo esta funcion para dibujar las cartas de los jugadores, por eso este parametro)
+ * @param visible para hacer o no la animacion
+ */
 @Composable
 fun DrawCommCards(
     modifier: Modifier = Modifier,

@@ -40,6 +40,10 @@ import mainMenuScreen.ButtonAlgo
 import mainMenuScreen.ColumnaIzquierda
 import mainMenuScreen.MainMenuScreen
 
+/**
+ * clase que sirve para navegar con  la libreria de voyager
+ * es la que contiene la screen de usuario
+ */
 class UserProfileScreen : Screen {
     @Composable
     override fun Content() {
