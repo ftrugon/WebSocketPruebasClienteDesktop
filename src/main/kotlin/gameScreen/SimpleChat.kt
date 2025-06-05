@@ -21,9 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import gameScreen.wsComm.Message
-import gameScreen.wsComm.MessageType
-import gameScreen.wsComm.PlayerDataToShow
+import gameScreen.wsComm.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.WebSocket
@@ -81,6 +79,20 @@ fun SimpleChat(
                     MessageType.NOTIFY_TURN -> {
                         val name = it.content.split(":").first()
                         Text("Turn of $name")
+                    }
+                    MessageType.ALL_PLAYERS_CARDS->{
+                        val map = Json.decodeFromString<MutableMap<String,List<Card>>>(it.content)
+                        map.forEach {
+                            DrawCardsOnChat(it.key, it.value)
+                        }
+                    }
+                    MessageType.STATE_UPDATE -> {
+                        val toShow = Json.decodeFromString<MutableList<Card>>(it.content)
+                        while (toShow.size < 5) {
+                            toShow.add(Card(CardSuit.NONE, CardValue.NONE))
+                        }
+                        DrawCardsOnChat("community cards", toShow)
+
                     }
                     else -> {
 
