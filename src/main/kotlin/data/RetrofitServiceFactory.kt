@@ -6,7 +6,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitServiceFactory {
 
-    private const val staticUrl = "http://localhost:8080"
+    private const val staticUrl = "https://pruebas-tfg.onrender.com"
 
     private fun getRetrofit(): Retrofit {
         return Retrofit.Builder()

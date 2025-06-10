@@ -46,7 +46,7 @@ class PokerViewModel(
 ) {
 
     // url con la que te coneectas
-    private val url = "ws://localhost:8080/game/"
+    private val url = "wss://pruebas-tfg.onrender.com/game/"
 
     // el cliente que hace la conexion con el ws
     private val client = OkHttpClient.Builder()
