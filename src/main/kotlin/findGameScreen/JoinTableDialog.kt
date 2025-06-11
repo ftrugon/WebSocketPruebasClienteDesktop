@@ -81,48 +81,64 @@ fun JoinTableDialog(
                         maxLines = 1
                     )
                     Spacer(modifier = Modifier.height(16.dp))
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Amount of tokens to join the table: ${dineroSeleccionado.toInt()} tokens")
 
-                        Slider(
-                            value = dineroSeleccionado,
-                            onValueChange = {
-                                dineroSeleccionado = it
-                            },
-                            valueRange = mesa.bigBlind.toFloat()..ApiData.userData!!.tokens.toFloat(),
-                            steps = (ApiData.userData!!.tokens - mesa.bigBlind).coerceAtLeast(0)
+                    var canJoin by remember { mutableStateOf(true) }
+
+                    val apiDataTokens = ApiData.userData?.tokens ?: 0
+
+                    if (mesa.numPlayers >= 6 || mesa.bigBlind >= apiDataTokens) {
+                        canJoin = false
+                    } else {
+                        canJoin = true
+                    }
+
+                    if (canJoin) {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text("Amount of tokens to join the table: ${dineroSeleccionado.toInt()} tokens")
+
+                            Slider(
+                                value = dineroSeleccionado,
+                                onValueChange = {
+                                    dineroSeleccionado = it
+                                },
+                                valueRange = mesa.bigBlind.toFloat()..ApiData.userData!!.tokens.toFloat(),
+                                steps = (ApiData.userData!!.tokens - mesa.bigBlind).coerceAtLeast(0)
+                            )
+
+                        }
+                        Row(
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                        {
+                            TextButton(onClick = onDismiss) {
+                                Text("Cancel")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
 
-                    }
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        TextButton(onClick = onDismiss) {
-                            Text("Cancel")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
 
-                        val canJoin = mesa.numPlayers < 6
-
-                        TextButton(
-                            onClick = {
-                                if (!tryJoin) {
-                                    tryJoin = true
-                                    onJoin(
-                                        PlayerInfoMessage(
-                                            ApiData.userData?.username ?: "",
-                                            dineroSeleccionado.toInt()
+                            TextButton(
+                                onClick = {
+                                    if (!tryJoin) {
+                                        tryJoin = true
+                                        onJoin(
+                                            PlayerInfoMessage(
+                                                ApiData.userData?.username ?: "",
+                                                dineroSeleccionado.toInt()
+                                            )
                                         )
-                                    )
 
-                                }
-                            },
-                            enabled = canJoin,
-                        ) {
-                            Text("Join")
+                                    }
+                                },
+                            ) {
+                                Text("Join")
+                            }
                         }
+                    }else{
+                        Text("You cant join this table.")
                     }
+
+
                 }
             }
 
