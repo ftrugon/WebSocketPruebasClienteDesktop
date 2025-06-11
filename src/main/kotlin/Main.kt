@@ -13,6 +13,7 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.ScaleTransition
 import cafe.adriel.voyager.transitions.SlideTransition
 import gameScreen.App
+import theme.CasinoTheme
 import welcomeScreen.WelcomeScreen
 
 /**
@@ -27,9 +28,8 @@ fun main() = application {
         state = rememberWindowState(width = 1100.dp, height = 900.dp)
     ) {
 
-
         //App()
-        MaterialTheme {
+        CasinoTheme {
             Navigator(WelcomeScreen()){
                 SlideTransition(it)
             }

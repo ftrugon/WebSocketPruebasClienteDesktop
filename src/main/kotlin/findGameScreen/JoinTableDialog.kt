@@ -57,7 +57,7 @@ fun JoinTableDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = Color(0xFF1A1A1A),
+                        color = Color.White.copy(0.40f),
                         shape = RoundedCornerShape(16.dp)
                     )
             ){
@@ -71,18 +71,18 @@ fun JoinTableDialog(
                     Text(
                         text = "Do you want to join this table?",
                         style = MaterialTheme.typography.h3,
-                        color = Color.White,
+
                         maxLines = 1
                     )
                     Text(
                         text = "${mesa.title} -> ${mesa.numPlayers}/6",
                         style = MaterialTheme.typography.body2,
-                        color = Color.White,
+
                         maxLines = 1
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Column(modifier = Modifier.fillMaxWidth()) {
-                        Text("Cantidad: ${dineroSeleccionado.toInt()} tokens")
+                        Text("Amount of tokens to join the table: ${dineroSeleccionado.toInt()} tokens")
 
                         Slider(
                             value = dineroSeleccionado,
@@ -99,7 +99,7 @@ fun JoinTableDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(onClick = onDismiss) {
-                            Text("Cancel", color = Color.LightGray)
+                            Text("Cancel")
                         }
                         Spacer(modifier = Modifier.width(8.dp))
 
@@ -120,7 +120,7 @@ fun JoinTableDialog(
                             },
                             enabled = canJoin,
                         ) {
-                            Text("Join", color = Color.White)
+                            Text("Join")
                         }
                     }
                 }

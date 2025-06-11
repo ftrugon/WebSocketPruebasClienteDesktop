@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Slider
@@ -64,7 +65,7 @@ fun CreateTableDialog(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Crear mesa", style = MaterialTheme.typography.h6)
+                Text("Create table", style = MaterialTheme.typography.h6)
 
                 OutlinedTextField(
                     value = title,
@@ -98,11 +99,7 @@ fun CreateTableDialog(
 
                     var isLoading by remember { mutableStateOf(false) }
 
-                    ButtonAlgo(
-                        modifier = Modifier,
-                        text = "Create table",
-                        enabled = !isLoading
-                    ) {
+                    Button({
                         if (title.isBlank() || description.isBlank() || bigBlind.isBlank()) {
                             errorText = "All fields are required"
                         }
@@ -124,7 +121,11 @@ fun CreateTableDialog(
                                 }
                             }
                         }
+                    },enabled = !isLoading){
+                        Text("Create table")
                     }
+
+
                 }
             }
         }
